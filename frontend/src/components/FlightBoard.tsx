@@ -1,5 +1,14 @@
 import React, { useState } from 'react';
-import { Plane, Clock, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import {
+  Plane,
+  Clock,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+  Car,
+  Train,
+  Route
+} from 'lucide-react';
 import { ParsedFlightInfo } from '../types';
 
 interface FlightBoardProps {
@@ -9,6 +18,7 @@ interface FlightBoardProps {
 
 export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }) => {
   const [showRaw, setShowRaw] = useState(false);
+  const isMultiModal = Boolean(flights.originToAirportTransit || flights.airportToDestinationTransit);
 
   return (
     <div className="space-y-6">
@@ -25,7 +35,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
             </div>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
-                Flight Details
+                {flights.routeType || 'Flight Details'}
               </span>
               <h3 className="text-xl font-bold text-white tracking-tight">
                 Recommended Flight Path & Options
@@ -45,8 +55,65 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
           )}
         </div>
 
+        {/* Multi-modal Door-to-Door Journey Breakdown (when ground transfers are needed) */}
+        {isMultiModal && (
+          <div className="mt-6 p-5 rounded-2xl bg-slate-950/70 border border-slate-800/90 space-y-4">
+            <div className="flex items-center gap-2">
+              <Route className="h-4 w-4 text-blue-400" />
+              <span className="text-xs font-bold uppercase tracking-wider text-blue-300">
+                Door-to-Door Transit Breakdown
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {/* Leg 1: Origin to Departure Airport */}
+              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                  <Car className="h-4 w-4 text-sky-400" />
+                  <span>Leg 1: Ground Transfer</span>
+                </div>
+                <div className="text-sm font-bold text-white">
+                  {flights.origin || 'Origin'} <span className="text-slate-500">to</span> {flights.departureAirport || 'Departure Airport'}
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {flights.originToAirportTransit || 'Direct access to departure airport'}
+                </p>
+              </div>
+
+              {/* Leg 2: Flight Route */}
+              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                  <Plane className="h-4 w-4 text-blue-400" />
+                  <span>Leg 2: Flight Route</span>
+                </div>
+                <div className="text-sm font-bold text-white">
+                  {flights.departureAirport || 'Departure Airport'} <span className="text-slate-500">to</span> {flights.arrivalAirport || 'Arrival Airport'}
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {flights.duration ? `${flights.duration} flight` : 'Scheduled flight'}
+                  {flights.airlines && flights.airlines.length > 0 ? ` via ${flights.airlines.slice(0, 2).join(', ')}` : ''}
+                </p>
+              </div>
+
+              {/* Leg 3: Arrival Airport to Destination */}
+              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-400">
+                  <Train className="h-4 w-4 text-emerald-400" />
+                  <span>Leg 3: Ground Transfer</span>
+                </div>
+                <div className="text-sm font-bold text-white">
+                  {flights.arrivalAirport || 'Arrival Airport'} <span className="text-slate-500">to</span> {destination}
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  {flights.airportToDestinationTransit || 'Direct access to destination'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Flight Route Visual Banner */}
-        <div className="py-6 my-2 flex flex-col md:flex-row items-center justify-between gap-6 bg-slate-950/60 rounded-2xl p-6 border border-slate-800/80">
+        <div className="py-6 my-4 flex flex-col md:flex-row items-center justify-between gap-6 bg-slate-950/60 rounded-2xl p-6 border border-slate-800/80">
           {/* Origin */}
           <div className="text-center md:text-left">
             <div className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
@@ -56,7 +123,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
               {flights.origin || 'Departure Hub'}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              {flights.origin ? 'Departure Gateway' : 'Origin Location'}
+              {flights.departureAirport ? `Via ${flights.departureAirport}` : (flights.origin ? 'Departure Gateway' : 'Origin Location')}
             </div>
           </div>
 
@@ -88,13 +155,13 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
               {destination}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              Arrival Gateways
+              {flights.arrivalAirport ? `Via ${flights.arrivalAirport}` : 'Arrival Gateway'}
             </div>
           </div>
         </div>
 
         {/* Airports & Carriers Chips */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
           {flights.airlines && flights.airlines.length > 0 && (
             <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-800/60">
               <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">

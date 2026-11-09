@@ -22,6 +22,12 @@ export function parseTripResponse(
       overviewSummary: data.plan.overview_summary,
       flights: {
         origin: data.plan.flights.origin || data.plan.origin,
+        destination: data.plan.flights.destination || data.plan.destination_title,
+        routeType: data.plan.flights.route_type,
+        departureAirport: data.plan.flights.departure_airport,
+        arrivalAirport: data.plan.flights.arrival_airport,
+        originToAirportTransit: data.plan.flights.origin_to_airport_transit,
+        airportToDestinationTransit: data.plan.flights.airport_to_destination_transit,
         duration: data.plan.flights.duration,
         fareRange: data.plan.flights.fare_range,
         airlines: data.plan.flights.airlines,

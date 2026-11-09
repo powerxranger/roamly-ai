@@ -24,9 +24,9 @@ def flight_agent(state: TravelState):
 
     try:
         if origin:
-            search_query = f"flights from {origin} to {destination} nonstop duration airlines airfare roundtrip INR rupees"
+            search_query = f"how to travel from {origin} to {destination} nearest airports flights train taxi route duration airfare INR"
         else:
-            search_query = f"flights to {destination} duration airlines airfare roundtrip INR rupees"
+            search_query = f"how to reach {destination} nearest airport flights airlines airfare roundtrip INR rupees"
         flight_search_results = run_async(tavily_mcp_search(search_query))
 
         structured_llm = get_llm().with_structured_output(FlightInfo)
@@ -42,6 +42,8 @@ def flight_agent(state: TravelState):
         ])
         if origin and not flight_info.origin:
             flight_info.origin = origin
+        if destination and not flight_info.destination:
+            flight_info.destination = destination
 
     except Exception as e:
         if existing_model:
@@ -53,6 +55,18 @@ def flight_agent(state: TravelState):
     flight_lines = []
     if flight_info.origin:
         flight_lines.append(f"Departure Origin: {flight_info.origin}")
+    if flight_info.destination:
+        flight_lines.append(f"Arrival Destination: {flight_info.destination}")
+    if flight_info.route_type:
+        flight_lines.append(f"Route Type: {flight_info.route_type}")
+    if flight_info.departure_airport:
+        flight_lines.append(f"Departure Airport: {flight_info.departure_airport}")
+    if flight_info.origin_to_airport_transit:
+        flight_lines.append(f"Origin Ground Transfer: {flight_info.origin_to_airport_transit}")
+    if flight_info.arrival_airport:
+        flight_lines.append(f"Arrival Airport: {flight_info.arrival_airport}")
+    if flight_info.airport_to_destination_transit:
+        flight_lines.append(f"Arrival Ground Transfer: {flight_info.airport_to_destination_transit}")
     if flight_info.duration:
         flight_lines.append(f"Flight Duration: {flight_info.duration}")
     if flight_info.fare_range:

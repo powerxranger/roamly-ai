@@ -11,6 +11,12 @@ export interface TravelPlanPayload {
   overview_summary: string;
   flights: {
     origin?: string;
+    destination?: string;
+    route_type?: string;
+    departure_airport?: string;
+    arrival_airport?: string;
+    origin_to_airport_transit?: string;
+    airport_to_destination_transit?: string;
     duration?: string;
     fare_range?: string;
     airlines?: string[];
@@ -103,6 +109,12 @@ export type ActiveTab = 'overview' | 'itinerary' | 'flights' | 'hotels' | 'weath
 // Parsed UI Data Structures
 export interface ParsedFlightInfo {
   origin?: string;
+  destination?: string;
+  routeType?: string;
+  departureAirport?: string;
+  arrivalAirport?: string;
+  originToAirportTransit?: string;
+  airportToDestinationTransit?: string;
   airports?: string[];
   airlines?: string[];
   duration?: string;

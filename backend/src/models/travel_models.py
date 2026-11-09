@@ -58,15 +58,36 @@ class TravelIntent(BaseModel):
 
 
 class FlightInfo(BaseModel):
-    """Structured flight intelligence emitted directly by Flight Agent."""
+    """Structured flight and route transit intelligence emitted directly by Flight Agent."""
 
-    origin: Optional[str] = Field(default=None, description="Departure location or hub code/name")
-    duration: Optional[str] = Field(default=None, description="Typical flight duration, e.g. '2h 45m direct' or '12-14 hrs direct'")
+    origin: Optional[str] = Field(default=None, description="Departure location or hub city/town")
+    destination: Optional[str] = Field(default=None, description="Arrival destination city/town")
+    route_type: Optional[str] = Field(
+        default=None,
+        description="Type of route, e.g. 'Direct Flight', 'Connecting Flight', or 'Multi-modal (Road/Rail + Flight)'",
+    )
+    departure_airport: Optional[str] = Field(
+        default=None,
+        description="Serving commercial departure airport (e.g. 'Indira Gandhi International (DEL)' or nearest airport if origin has no commercial airport, like 'Dehradun Jolly Grant Airport (DED)')",
+    )
+    arrival_airport: Optional[str] = Field(
+        default=None,
+        description="Serving commercial arrival airport (e.g. 'Kempegowda International (BLR)' or nearest airport if destination has no commercial airport, like 'Hubli Airport (HBX)')",
+    )
+    origin_to_airport_transit: Optional[str] = Field(
+        default=None,
+        description="Ground transit from origin city to departure airport if origin city has no airport (e.g. 'Cab or bus from Rishikesh to Dehradun Airport (~35 km, 45-60 mins)')",
+    )
+    airport_to_destination_transit: Optional[str] = Field(
+        default=None,
+        description="Ground transit from arrival airport to destination city if destination city has no airport (e.g. 'Cab or train from Hubli/Jindal Airport to Hampi (~40-140 km, 1-3 hrs)')",
+    )
+    duration: Optional[str] = Field(default=None, description="Typical flight duration, e.g. '2h 45m direct' or total transit time")
     fare_range: Optional[str] = Field(default=None, description="Estimated airfare range in INR, e.g. '₹7,000 - ₹14,000'")
     airlines: list[str] = Field(default_factory=list, description="Top airlines operating route")
     airports: list[str] = Field(default_factory=list, description="Primary airport codes/names")
     season_tips: Optional[str] = Field(default=None, description="Booking tips and seasonal advice")
-    summary: str = Field(default="", description="Executive flight summary")
+    summary: str = Field(default="", description="Executive route and transit summary")
 
 
 class HotelOption(BaseModel):

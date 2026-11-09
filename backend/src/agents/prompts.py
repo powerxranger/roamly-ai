@@ -41,18 +41,24 @@ Instructions:
 """
 
 FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for travel from {origin} to {destination}.
-Extract concrete, structured flight intelligence for this specific route.
+Determine the transit route and nearest commercial airports.
+If {origin} or {destination} do not have commercial airports, identify the nearest serving airport for each location and the ground transfer connections (car, taxi, bus, or train) needed.
 
 Search Context:
 {flight_data}
 
 Provide:
-1. duration: Realistic flight duration between these specific locations based on search context (e.g. '2h 45m direct' for domestic flights or actual duration found)
-2. fare_range: Estimated roundtrip coach/economy fare range quoted in Indian Rupees (₹ / INR) based on search context (e.g. '₹7,000 - ₹14,000' for domestic flights or actual route fares found)
-3. airlines: Up to 4 major carriers operating routes between {origin} and {destination}
-4. airports: Departure hub codes/names and arrival hub codes/names (e.g. ['DEL', 'BLR'])
-5. season_tips: Key booking advice or advance purchase recommendations
-6. summary: 2-sentence executive summary of the flight route from {origin} to {destination}
+1. route_type: One of 'Direct Flight', 'Connecting Flight', or 'Multi-modal (Road/Rail + Flight)' depending on whether ground transfers to/from airports are required.
+2. departure_airport: Serving commercial departure airport (e.g. 'Indira Gandhi International Airport (DEL)', or nearest airport if {origin} has no commercial airport, such as 'Dehradun Jolly Grant Airport (DED)' for Rishikesh).
+3. arrival_airport: Serving commercial arrival airport (e.g. 'Kempegowda International Airport (BLR)', or nearest airport if {destination} has no commercial airport, such as 'Hubli Airport (HBX)' or 'Jindal Vijayanagar Airport (VDY)' for Hampi).
+4. origin_to_airport_transit: Ground travel guidance from {origin} to the departure airport if {origin} has no commercial airport (mode: taxi/train/bus, distance, and travel time). Leave null if {origin} has its own commercial airport.
+5. airport_to_destination_transit: Ground travel guidance from the arrival airport to {destination} if {destination} has no commercial airport (mode: taxi/train/bus, distance, and travel time). Leave null if {destination} has its own commercial airport.
+6. duration: Realistic flight duration between the airports based on search context (e.g. '2h 45m direct' or total transit time).
+7. fare_range: Estimated roundtrip economy airfare range quoted in Indian Rupees (₹ / INR) based on search context.
+8. airlines: Up to 4 major carriers operating routes between the airports.
+9. airports: Departure hub codes/names and arrival hub codes/names (e.g. ['DEL', 'BLR']).
+10. season_tips: Key booking advice or advance purchase recommendations.
+11. summary: 2 to 3 sentence practical summary of the journey route, explicitly highlighting any airport ground transfers.
 """
 
 HOTEL_STRUCTURED_PROMPT = """Analyze the real-time accommodation search results for {destination}.
@@ -89,10 +95,11 @@ Instructions:
 For each day:
 - day_number: integer (1, 2, 3...)
 - title: concise descriptive day theme
-- morning: key landmark, scenic area, or morning exploration
+- morning: key landmark, scenic area, or morning exploration (on Day 1, factor in arrival transit and hotel check-in if coming from a distant or multi-modal route)
 - afternoon: afternoon activity, neighborhood stroll, or scenic spot
 - evening: dinner recommendation or evening leisure
 - highlights: 2 to 3 concise bullet highlights
+4. If Transit Context includes ground transfers from an arrival airport to destination (multi-modal route), design Day 1 to realistically reflect arrival transfer timing before sightseeing.
 """
 
 FINAL_STRUCTURED_PROMPT = """Create a clear travel summary and estimated budget for a trip to {destination}.
@@ -106,8 +113,8 @@ Context:
 - Itinerary Preview: {itinerary}
 
 Provide:
-1. trip_summary: 2 clear, helpful paragraphs covering arrival transit from {origin} to {destination}, daily highlights, and key activities. Never invent long-haul or international flights when the trip is domestic or between the specified cities.
-2. estimated_budget: Realistic total estimated budget range per traveler quoted in Indian Rupees (₹ / INR), dynamically matching the trip duration and combining airfare, hotel nights, meals, and local transport.
+1. trip_summary: 2 clear, helpful paragraphs covering arrival transit from {origin} to {destination}, daily highlights, and key activities. If either city lacks a commercial airport, explain the door-to-door transit route clearly (ground travel to nearest airport, flight leg, and ground transfer to final destination). Never invent long-haul or international flights when the trip is domestic or between the specified cities.
+2. estimated_budget: Realistic total estimated budget range per traveler quoted in Indian Rupees (₹ / INR), dynamically matching the trip duration and combining airfare, airport road/rail transfers, hotel nights, meals, and local transport.
 3. recommendations: 3 to 4 practical travel tips for transport, reservations, and seasonal preparation.
 """
 
