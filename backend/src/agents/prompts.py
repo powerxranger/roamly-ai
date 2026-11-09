@@ -40,7 +40,7 @@ Search Context:
 
 Provide:
 1. duration: Realistic flight duration, e.g. '11-13 hours direct'
-2. fare_range: Estimated roundtrip coach/economy fare range, e.g. '$850 - $1,250'
+2. fare_range: Estimated roundtrip coach/economy fare range quoted in Indian Rupees (₹ / INR), e.g. '₹65,000 - ₹95,000'
 3. airlines: Up to 4 major carriers operating routes to this destination
 4. airports: Departure/arrival hub codes or names (e.g. ['HND', 'NRT'])
 5. season_tips: Key booking advice or peak season warning
@@ -56,7 +56,7 @@ Curate exactly 3 standout accommodation recommendations:
 Search Context:
 {hotel_data}
 
-Return a list of 3 hotels with accurate name, tier, estimated nightly price_range, neighborhood location, and up to 4 key amenities.
+Return a list of 3 hotels with accurate name, tier, estimated nightly price_range quoted in Indian Rupees (₹ / INR, e.g. '₹15,000 - ₹25,000/night'), neighborhood location, and up to 4 key amenities. All rates must be in Indian Rupees (₹).
 """
 
 ITINERARY_STRUCTURED_PROMPT = """Create or refine a structured day-by-day travel itinerary for {destination}.
@@ -97,6 +97,6 @@ Context:
 
 Provide:
 1. trip_summary: 2 vivid, polished paragraphs capturing the atmosphere, highlights, and best travel window.
-2. estimated_budget: Total estimated budget range per traveler (e.g. '$3,500 - $4,800 per person total').
+2. estimated_budget: Total estimated budget range per traveler quoted in Indian Rupees (₹ / INR, e.g. '₹2,50,000 - ₹3,50,000 per traveler total'). All figures must strictly be in Indian Rupees (₹).
 3. recommendations: 3 to 4 essential insider concierge tips for transport, reservations, and seasonal preparation.
 """

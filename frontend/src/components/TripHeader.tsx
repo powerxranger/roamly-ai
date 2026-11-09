@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   Clock,
-  DollarSign,
+  IndianRupee,
   CloudSun,
   Copy,
   Check,
@@ -103,7 +103,7 @@ export const TripHeader: React.FC<TripHeaderProps> = ({
 
             {plan.estimatedBudget && (
               <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs text-emerald-300">
-                <DollarSign className="h-3.5 w-3.5 text-emerald-400" />
+                <IndianRupee className="h-3.5 w-3.5 text-emerald-400" />
                 <span>{plan.estimatedBudget}</span>
               </div>
             )}

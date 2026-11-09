@@ -34,7 +34,7 @@ def assemble_trip_plan(
     plan = TripPlan(
         destination_title=destination or "Bespoke Journey",
         duration_label=duration_label,
-        estimated_budget=estimated_budget or "$3,200 - $4,800 per traveler",
+        estimated_budget=estimated_budget or "₹2,50,000 - ₹3,75,000 per traveler",
         overview_summary=overview_summary or "Bespoke travel plan curated by autonomous concierges.",
         flights=flights,
         hotels=hotels,

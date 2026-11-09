@@ -22,7 +22,7 @@ def hotel_agent(state: TravelState):
     destination = state.get("destination") or state.get("user_query", "")
 
     try:
-        search_query = f"best hotels accommodations in {destination} luxury boutique rates"
+        search_query = f"best hotels accommodations in {destination} luxury boutique rates INR rupees per night"
         hotel_search_results = run_async(tavily_mcp_search(search_query))
 
         structured_llm = get_llm().with_structured_output(HotelList)
@@ -32,7 +32,7 @@ def hotel_agent(state: TravelState):
         )
 
         result: HotelList = structured_llm.invoke([
-            SystemMessage(content="You are a luxury hospitality curator. Emit strictly structured accommodation models."),
+            SystemMessage(content="You are a luxury hospitality curator. Emit strictly structured accommodation models with all nightly rates quoted in Indian Rupees (₹ / INR)."),
             HumanMessage(content=prompt),
         ])
 
@@ -46,7 +46,7 @@ def hotel_agent(state: TravelState):
                 HotelOption(
                     name=f"The Grand {destination} Sanctuary",
                     tier="Luxury",
-                    price_range="$350 - $550/night",
+                    price_range="₹28,000 - ₹45,000/night",
                     location=f"Prime Central {destination}",
                     amenities=["Spa & Wellness", "Fine Dining", "Concierge"],
                     description="Premier luxury sanctuary offering bespoke service.",
@@ -54,7 +54,7 @@ def hotel_agent(state: TravelState):
                 HotelOption(
                     name=f"Boutique Heritage Inn {destination}",
                     tier="Boutique",
-                    price_range="$220 - $320/night",
+                    price_range="₹16,000 - ₹26,000/night",
                     location=f"Arts & Cultural District",
                     amenities=["Bespoke Design", "Artisanal Breakfast", "Transit Access"],
                     description="Charming boutique residence with localized character.",
@@ -62,7 +62,7 @@ def hotel_agent(state: TravelState):
                 HotelOption(
                     name=f"Urban Station Hotel {destination}",
                     tier="Value",
-                    price_range="$130 - $180/night",
+                    price_range="₹7,500 - ₹12,000/night",
                     location=f"Central Station Hub",
                     amenities=["Fast Wi-Fi", "Express Check-in", "Subway Steps"],
                     description="Modern, efficient stay tailored for easy exploration.",

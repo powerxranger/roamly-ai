@@ -50,7 +50,7 @@ def test_travel_intent_unspecified_duration():
 def test_assemble_trip_plan_zero_regex():
     flight_data = {
         "duration": "12 hours",
-        "fare_range": "$900 - $1,200",
+        "fare_range": "₹75,000 - ₹95,000",
         "airlines": ["ANA", "JAL"],
         "airports": ["HND", "NRT"],
         "season_tips": "Book 6 weeks ahead",
@@ -60,7 +60,7 @@ def test_assemble_trip_plan_zero_regex():
         {
             "name": "The Ritz-Carlton Kyoto",
             "tier": "Luxury",
-            "price_range": "$800/night",
+            "price_range": "₹65,000/night",
             "location": "Kamigyo Ward",
             "amenities": ["Spa", "Michelin Dining"],
             "description": "Luxury riverside sanctuary.",
@@ -86,7 +86,7 @@ def test_assemble_trip_plan_zero_regex():
     plan_dict = assemble_trip_plan(
         destination="Kyoto, Japan",
         overview_summary="Bespoke luxury journey across ancient Kyoto.",
-        estimated_budget="$4,000 - $6,000",
+        estimated_budget="₹3,20,000 - ₹4,50,000",
         recommendations=["Book temple passes early"],
         flight_data=flight_data,
         hotel_data=hotel_data,
@@ -98,7 +98,9 @@ def test_assemble_trip_plan_zero_regex():
     assert plan_dict["destination_title"] == "Kyoto, Japan"
     assert len(plan_dict["hotels"]) == 1
     assert plan_dict["hotels"][0]["name"] == "The Ritz-Carlton Kyoto"
+    assert plan_dict["hotels"][0]["price_range"] == "₹65,000/night"
     assert len(plan_dict["itinerary_days"]) == 1
     assert plan_dict["itinerary_days"][0]["day_number"] == 1
     assert plan_dict["weather"]["temperature"] == "22°C"
     assert plan_dict["flights"]["airlines"] == ["ANA", "JAL"]
+    assert plan_dict["flights"]["fare_range"] == "₹75,000 - ₹95,000"

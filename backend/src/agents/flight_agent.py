@@ -22,7 +22,7 @@ def flight_agent(state: TravelState):
     destination = state.get("destination") or state.get("user_query", "")
 
     try:
-        search_query = f"flights to {destination} duration airlines airfare"
+        search_query = f"flights to {destination} duration airlines airfare roundtrip INR rupees"
         flight_search_results = run_async(tavily_mcp_search(search_query))
 
         structured_llm = get_llm().with_structured_output(FlightInfo)
@@ -32,7 +32,7 @@ def flight_agent(state: TravelState):
         )
 
         flight_info: FlightInfo = structured_llm.invoke([
-            SystemMessage(content="You are an expert flight data analyst. Emit strictly structured flight data."),
+            SystemMessage(content="You are an expert flight data analyst. Emit strictly structured flight data with all fares quoted in Indian Rupees (₹ / INR)."),
             HumanMessage(content=prompt),
         ])
 
@@ -42,7 +42,7 @@ def flight_agent(state: TravelState):
         else:
             flight_info = FlightInfo(
                 duration="Varies by departure city",
-                fare_range="$750 - $1,200 typical",
+                fare_range="₹65,000 - ₹95,000 typical",
                 airlines=["Major International Carriers"],
                 airports=["Primary International Hub"],
                 season_tips="Book 6-8 weeks prior to departure for best rates.",
