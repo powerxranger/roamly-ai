@@ -1,0 +1,38 @@
+name: roamly
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: roamly-ai:latest
+    restart: unless-stopped
+    ports:
+      # Host port is configurable so it does not collide with other projects
+      # already bound to 8000. The container always listens on 8000 inside
+      # the network, which is what the healthcheck targets.
+      #   APP_PORT=8001 docker compose up -d
+      - "${APP_PORT:-8000}:8000"
+
+    # API keys come from .env. Nothing secret is baked
+    # into the image - see .dockerignore.
+    env_file:
+      - .env
+
+    environment:
+      HOST: 0.0.0.0
+      PORT: "8000"
+
+    volumes:
+      # Download cache for uv packages.
+      - uv-cache:/home/app/.cache/uv
+
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+
+volumes:
+  uv-cache:
