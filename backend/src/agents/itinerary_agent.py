@@ -1,6 +1,5 @@
 """Combines flight, hotel, weather, and live web consensus into a structured Pydantic itinerary plan."""
 
-import time
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.agents.prompts import ITINERARY_STRUCTURED_PROMPT
@@ -20,9 +19,6 @@ def itinerary_agent(state: TravelState):
     # If itinerary exists and user only changed stays or transit
     if existing_itinerary and not needs_itinerary:
         return {}
-
-    # Gentle pacing pause for Groq rate limits
-    time.sleep(0.5)
 
     destination = state.get("destination") or state.get("user_query", "")
     requested_duration = intent.get("duration_days")

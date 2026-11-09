@@ -1,6 +1,5 @@
 """Formats structured agent outputs into the user-facing executive synthesis and TripPlan (Zero regex)."""
 
-import time
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.agents.prompts import FINAL_STRUCTURED_PROMPT
@@ -12,9 +11,6 @@ from src.utils.plan_builder import assemble_trip_plan
 
 
 def final_agent(state: TravelState):
-    # Gentle pacing pause for Groq rate limits
-    time.sleep(0.5)
-
     destination = state.get("destination") or state.get("user_query", "")
     origin = state.get("origin") or state.get("intent", {}).get("origin") or ""
 

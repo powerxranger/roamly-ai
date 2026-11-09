@@ -22,18 +22,24 @@ def flight_agent(state: TravelState):
     destination = state.get("destination") or state.get("user_query", "")
     origin = state.get("origin") or intent.get("origin") or ""
 
+    search_context = ""
     try:
         if origin:
             search_query = f"how to travel from {origin} to {destination} flights train road bus distance duration fare INR"
         else:
             search_query = f"how to reach {destination} nearest airport flights train bus road distance duration INR rupees"
         flight_search_results = run_async(tavily_mcp_search(search_query))
+        search_context = truncate(flight_search_results, 1500)
+    except Exception as search_err:
+        print(f"[FlightAgent] Live web search unavailable ({search_err}). Falling back to model transit intelligence...")
+        search_context = f"Direct and regional transit options connecting {origin or 'origin'} and {destination}."
 
+    try:
         structured_llm = get_structured_llm(FlightInfo)
         prompt = FLIGHT_STRUCTURED_PROMPT.format(
             origin=origin or "Departure city",
             destination=destination,
-            flight_data=truncate(flight_search_results, 1500),
+            flight_data=search_context,
         )
 
         flight_info: FlightInfo = structured_llm.invoke([

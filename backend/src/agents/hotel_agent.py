@@ -21,14 +21,20 @@ def hotel_agent(state: TravelState):
 
     destination = state.get("destination") or state.get("user_query", "")
 
+    search_context = ""
     try:
         search_query = f"best hotels accommodations in {destination} luxury boutique rates INR rupees per night"
         hotel_search_results = run_async(tavily_mcp_search(search_query))
+        search_context = truncate(hotel_search_results, 1500)
+    except Exception as search_err:
+        print(f"[HotelAgent] Live web search unavailable ({search_err}). Falling back to model accommodation knowledge...")
+        search_context = f"Top accommodations, luxury stays, and boutique hotels in {destination}."
 
+    try:
         structured_llm = get_structured_llm(HotelList)
         prompt = HOTEL_STRUCTURED_PROMPT.format(
             destination=destination,
-            hotel_data=truncate(hotel_search_results, 1500),
+            hotel_data=search_context,
         )
 
         result: HotelList = structured_llm.invoke([

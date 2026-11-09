@@ -1,12 +1,5 @@
 """Structured prompt templates used by the Roamly AI agents."""
 
-DESTINATION_EXTRACTION_PROMPT = """Extract the primary travel destination city or country from this query:
-
-{query}
-
-Return ONLY the clean destination name (e.g. 'Tokyo', 'Paris', 'Rome').
-"""
-
 ROUTER_SYSTEM_PROMPT = """You are the Lead Travel Supervisor in an autonomous multi-agent travel planning system.
 Analyze the user's travel request semantically to determine the required agent activations.
 
