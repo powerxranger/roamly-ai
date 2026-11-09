@@ -10,15 +10,15 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
-import { ConciergeRadar } from './components/ConciergeRadar';
+import { PlanningRadar } from './components/PlanningRadar';
 import { ResultsViewer } from './components/ResultsViewer';
 import { SamplePrompts } from './components/SamplePrompts';
 import { TechSpecsDrawer } from './components/TechSpecsDrawer';
 import { UserQueryCard } from './components/UserQueryCard';
-import { ConciergeTask, TravelSuccessResponse } from './types';
+import { PlannerTask, TravelSuccessResponse } from './types';
 import { checkHealth, planTravel, ApiError } from './api';
 
-const INITIAL_PLANNING_TASKS: ConciergeTask[] = [
+const INITIAL_PLANNING_TASKS: PlannerTask[] = [
   {
     id: 'flight_scout',
     label: 'Flights',
@@ -68,7 +68,7 @@ export const App: React.FC = () => {
   const [refinements, setRefinements] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
-  const [tasks, setTasks] = useState<ConciergeTask[]>(INITIAL_PLANNING_TASKS);
+  const [tasks, setTasks] = useState<PlannerTask[]>(INITIAL_PLANNING_TASKS);
   const [results, setResults] = useState<TravelSuccessResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -388,9 +388,9 @@ export const App: React.FC = () => {
               </div>
             )}
 
-            {/* Live Concierge Radar */}
+            {/* Live Planning Radar */}
             <div className="max-w-5xl mx-auto w-full">
-              <ConciergeRadar
+              <PlanningRadar
                 tasks={tasks}
                 isProcessing={isProcessing}
                 onOpenSpecs={() => setIsTechSpecsOpen(true)}
