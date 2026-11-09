@@ -8,6 +8,75 @@ from src.graph.graph import get_travel_graph
 from src.graph.state import initial_state
 
 
+async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> dict:
+    """Async entry point running graph nodes in parallel."""
+    get_groq_api_key()
+
+    if not thread_id:
+        thread_id = f"user_{uuid.uuid4().hex}"
+
+    config = {
+        "configurable": {
+            "thread_id": thread_id
+        }
+    }
+
+    graph = get_travel_graph()
+
+    # Check if this thread already has existing state in the checkpointer
+    existing_state = None
+    try:
+        existing_snapshot = await graph.aget_state(config)
+        if existing_snapshot and existing_snapshot.values and existing_snapshot.values.get("user_query"):
+            existing_state = existing_snapshot.values
+    except Exception:
+        existing_state = None
+
+    if existing_state:
+        # Semantic follow-up: preserve existing structured data and append to history
+        followup_history = list(existing_state.get("followup_history", []))
+        followup_history.append(user_input)
+
+        input_data = {
+            "messages": [HumanMessage(content=user_input)],
+            "user_query": user_input,
+            "destination": existing_state.get("destination", ""),
+            "flight_results": existing_state.get("flight_results", ""),
+            "hotel_results": existing_state.get("hotel_results", ""),
+            "weather_results": existing_state.get("weather_results", ""),
+            "itinerary": existing_state.get("itinerary", ""),
+            "flight_model": existing_state.get("flight_model"),
+            "hotel_model": existing_state.get("hotel_model"),
+            "itinerary_model": existing_state.get("itinerary_model"),
+            "weather_model": existing_state.get("weather_model"),
+            "plan": existing_state.get("plan"),
+            "followup_history": followup_history,
+            "llm_calls": 0,
+        }
+    else:
+        # Initial travel request
+        input_data = initial_state(user_input)
+
+    result = await graph.ainvoke(
+        input_data,
+        config=config,
+    )
+
+    final_answer = result["messages"][-1].content
+
+    return {
+        "thread_id": thread_id,
+        "answer": final_answer,
+        "plan": result.get("plan"),
+        "destination": result.get("destination", ""),
+        "flight_results": result.get("flight_results", ""),
+        "hotel_results": result.get("hotel_results", ""),
+        "weather_results": result.get("weather_results", ""),
+        "itinerary": result.get("itinerary", ""),
+        "llm_calls": result.get("llm_calls", 0),
+    }
+
+
 def run_travel_agent(user_input: str, thread_id: str | None = None) -> dict:
     get_groq_api_key()
 

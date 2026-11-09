@@ -37,11 +37,22 @@ FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for trave
 Evaluate all viable transit mediums between these locations: flights, train/rail, and road/driving.
 
 Travel Evaluation Instructions:
-1. Distance and Route Feasibility:
-   - If {origin} and {destination} are close or regional (e.g. under 400-500 km or connected by high-speed rail or expressways, such as Delhi to Agra/Jaipur or Mumbai to Pune), assess if taking a train or driving is faster and more convenient than flying when airport security, check-in, and transfer times are factored in.
-   - For all domestic and land-connected routes, always extract concrete train and road options alongside flights so the traveler can compare mediums.
-   - For international routes across oceans, set train_option and road_option to null, and focus on flights.
-   - If either location lacks a commercial airport, identify the nearest commercial airport and detail any required ground transfers.
+1. Route Distance and Mode Feasibility:
+   - Regional & Direct Ground Routes (typically under 350-400 km, or where direct rail or road travel is faster and simpler than flying once airport security, check-in, and transfer times are factored in):
+     * Recommend Road / Drive or Train as primary_mode.
+     * Do not invent artificial flight hops or airport legs between neighboring towns.
+     * In such cases, set departure_airport, arrival_airport, origin_to_airport_transit, airport_to_destination_transit, duration, and fare_range to null, and airlines and airports to empty lists [].
+   - Shared Serving Airports:
+     * If {origin} and {destination} rely on the same commercial airport hub, flying between them is physically impossible. Strictly treat the trip as direct road or train transit with null airport and flight fields.
+   - Long-Distance Routes Requiring Flights:
+     * When travel distance is substantial (e.g. 500+ km or across water) and direct road/train is impractical:
+       - If {origin} or {destination} lacks a commercial airport, identify the nearest distinct commercial airports for departure and arrival.
+       - Detail the 3-leg multi-modal journey: ground transfer to departure airport, flight leg between the two distinct airports, and ground transfer to destination.
+       - Set primary_mode to 'Multi-modal' or 'Flight', and route_type to 'Multi-modal Transit'.
+   - Multi-Medium Comparison:
+     * For all domestic, land-connected routes, always extract concrete train and road options alongside flights so travelers can compare durations, fares, and convenience.
+   - International Routes:
+     * For trans-oceanic routes, set train_option and road_option to null, and focus on flights.
 
 Search Context:
 {flight_data}
@@ -51,13 +62,13 @@ Provide:
 2. primary_mode: The single recommended primary mode of transit ('Train', 'Road / Drive', 'Flight', or 'Multi-modal').
 3. mode_recommendation: 2 to 3 practical sentences explaining which mode is best and why, comparing total travel time (including airport buffer), convenience, and cost.
 4. duration: Typical flight duration if flying is viable (e.g. '2h 45m direct'), or null if flying is not recommended or impractical for this distance.
-5. fare_range: Estimated roundtrip economy airfare in Indian Rupees (₹ / INR).
+5. fare_range: Estimated roundtrip economy airfare in Indian Rupees (₹ / INR), or null if flying is not viable.
 6. airlines: Up to 4 major carriers operating routes between the airports. If flying is not viable or not recommended, provide empty list [] or null.
 7. airports: Departure and arrival airport codes/names (e.g. ['DEL', 'BLR']). If not applicable, provide empty list [] or null.
-8. departure_airport: Serving departure airport (nearest commercial hub if {origin} has no commercial airport).
-9. arrival_airport: Serving arrival airport (nearest commercial hub if {destination} has no commercial airport).
-10. origin_to_airport_transit: Ground travel guidance from {origin} to departure airport if {origin} lacks an airport (mode, distance, travel time). Leave null if origin has its own airport.
-11. airport_to_destination_transit: Ground travel guidance from arrival airport to {destination} if {destination} lacks an airport (mode, distance, travel time). Leave null if destination has its own airport.
+8. departure_airport: Serving departure airport ONLY if flying is part of the journey. Leave null if the journey is purely by road or train, or if flying is impractical.
+9. arrival_airport: Serving arrival airport ONLY if flying is part of the journey. Leave null if the journey is purely by road or train, or if flying is impractical.
+10. origin_to_airport_transit: Ground travel guidance from {origin} to departure airport ONLY if flying is part of a multi-modal flight journey and {origin} lacks an airport. Leave null if origin has its own airport, or if the entire journey is by road or train.
+11. airport_to_destination_transit: Ground travel guidance from arrival airport to {destination} ONLY if flying is part of a multi-modal flight journey and {destination} lacks an airport. Leave null if destination has its own airport, or if the entire journey is by road or train.
 12. train_option: If train travel is viable, provide:
     - mode: 'Train'
     - duration: Typical train journey duration (e.g. '3h 45m')

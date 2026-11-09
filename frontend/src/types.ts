@@ -149,6 +149,10 @@ export interface ParsedFlightInfo {
   rawText: string;
 }
 
+// Multi-modal transit type aliases
+export type ParsedTransitInfo = ParsedFlightInfo;
+export type TransitPlanPayload = TravelPlanPayload['flights'];
+
 export interface ParsedHotelItem {
   name: string;
   tier: 'Luxury' | 'Boutique' | 'Value' | 'General';

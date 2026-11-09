@@ -5,6 +5,8 @@ from src.models.travel_models import (
     FlightInfo,
     HotelOption,
     ItineraryDayPlan,
+    TransitInfo,
+    TransitOption,
     TravelIntent,
     TripPlan,
     WeatherPlan,
@@ -238,6 +240,65 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(plan_dict["flights"]["airlines"], [])
         self.assertEqual(plan_dict["flights"]["airports"], [])
         self.assertEqual(plan_dict["flights"]["primary_mode"], "Train")
+
+    def test_ground_route_suppresses_flight_legs_and_airports(self):
+        """Verify that pure ground routes (Road / Drive, Train) have null flight duration,
+        no airport legs, and assemble into a clean ground-only plan."""
+        flight_data = {
+            "origin": "Rishikesh",
+            "destination": "Haridwar",
+            "route_type": "Short Regional Route",
+            "primary_mode": "Road / Drive",
+            "mode_recommendation": "Direct road travel via NH 334 takes roughly 45 minutes for this 25 km trip.",
+            "duration": None,
+            "fare_range": None,
+            "airlines": [],
+            "airports": [],
+            "departure_airport": None,
+            "arrival_airport": None,
+            "origin_to_airport_transit": None,
+            "airport_to_destination_transit": None,
+            "road_option": {
+                "mode": "Road / Drive",
+                "duration": "45 mins",
+                "fare_range": "₹500 - ₹900",
+                "operators": ["Auto / Cab", "Local Bus"],
+                "terminals": ["Rishikesh", "Haridwar"],
+                "details": "Direct highway drive along NH 334.",
+            },
+            "season_tips": "Avoid peak ghat pilgrimage hours.",
+            "summary": "Road transit is the natural and fastest choice between Rishikesh and Haridwar.",
+        }
+
+        plan_dict = assemble_trip_plan(
+            destination="Haridwar",
+            origin="Rishikesh",
+            overview_summary="Road trip from Rishikesh to Haridwar.",
+            flight_data=flight_data,
+        )
+
+        flights = plan_dict["flights"]
+        self.assertEqual(flights["primary_mode"], "Road / Drive")
+        self.assertIsNone(flights["duration"])
+        self.assertIsNone(flights["departure_airport"])
+        self.assertIsNone(flights["arrival_airport"])
+        self.assertIsNone(flights["origin_to_airport_transit"])
+        self.assertIsNone(flights["airport_to_destination_transit"])
+        self.assertIsNotNone(flights["road_option"])
+        self.assertEqual(flights["road_option"]["duration"], "45 mins")
+
+    def test_transit_info_model_naming_and_compatibility(self):
+        """Verify that TransitInfo and FlightInfo are interchangeable."""
+        self.assertIs(TransitInfo, FlightInfo)
+        info = TransitInfo(
+            primary_mode="Train",
+            mode_recommendation="High speed rail is optimal.",
+            train_option=TransitOption(mode="Train", duration="2h", fare_range="₹800"),
+        )
+        self.assertEqual(info.primary_mode, "Train")
+        self.assertEqual(info.airlines, [])
+        self.assertEqual(info.airports, [])
+        self.assertEqual(info.train_option.operators, [])
 
 
 if __name__ == "__main__":

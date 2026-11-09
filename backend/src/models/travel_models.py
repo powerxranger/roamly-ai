@@ -73,8 +73,8 @@ class TransitOption(BaseModel):
         return [] if v is None else v
 
 
-class FlightInfo(BaseModel):
-    """Structured transit intelligence (flights, trains, and road/driving) emitted directly by Flight/Transit Agent."""
+class TransitInfo(BaseModel):
+    """Structured multi-modal transit intelligence (flights, trains, and road/driving)."""
 
     origin: Optional[str] = Field(default=None, description="Departure location or hub city/town")
     destination: Optional[str] = Field(default=None, description="Arrival destination city/town")
@@ -125,6 +125,10 @@ class FlightInfo(BaseModel):
     @classmethod
     def coerce_flight_lists(cls, v):
         return [] if v is None else v
+
+
+# Backward compatibility alias
+FlightInfo = TransitInfo
 
 
 class HotelOption(BaseModel):
@@ -222,7 +226,7 @@ class TripPlan(BaseModel):
     duration_label: str = Field(..., description="Duration label, e.g. '7 Days'")
     estimated_budget: Optional[str] = Field(default=None, description="Total budget estimate")
     overview_summary: str = Field(..., description="Trip overview summary")
-    flights: FlightInfo = Field(default_factory=FlightInfo)
+    flights: TransitInfo = Field(default_factory=TransitInfo, description="Multi-modal transit plan across air, rail, and road")
     hotels: Optional[list[HotelOption]] = Field(default_factory=list)
     itinerary_days: Optional[list[ItineraryDayPlan]] = Field(default_factory=list)
     weather: WeatherPlan = Field(default_factory=WeatherPlan)

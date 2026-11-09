@@ -19,7 +19,23 @@ interface FlightBoardProps {
 
 export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }) => {
   const [showRaw, setShowRaw] = useState(false);
-  const isMultiModal = Boolean(flights.originToAirportTransit || flights.airportToDestinationTransit);
+
+  // Ground-only route (road/drive or train without flight duration)
+  const isGroundOnly = (flights.primaryMode === 'Road / Drive' ||
+    flights.primaryMode === 'Road' ||
+    flights.primaryMode === 'Train') && !flights.duration;
+
+  // Multi-modal transit applies ONLY when a genuine flight connects two distinct airports
+  const hasDistinctAirports = Boolean(
+    flights.departureAirport &&
+    flights.arrivalAirport &&
+    flights.departureAirport.trim().toLowerCase() !== flights.arrivalAirport.trim().toLowerCase()
+  );
+
+  const isMultiModal = hasDistinctAirports &&
+    !isGroundOnly &&
+    Boolean(flights.originToAirportTransit || flights.airportToDestinationTransit);
+
   const hasAlternatives = Boolean(flights.trainOption || flights.roadOption);
 
   return (
@@ -278,7 +294,15 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
               {flights.origin || 'Departure Hub'}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              {flights.departureAirport ? `Via ${flights.departureAirport}` : (flights.origin ? 'Departure Gateway' : 'Origin Location')}
+              {isMultiModal && flights.departureAirport
+                ? `Via ${flights.departureAirport}`
+                : flights.primaryMode === 'Train' && flights.trainOption?.terminals?.[0]
+                  ? `Station: ${flights.trainOption.terminals[0]}`
+                  : (flights.primaryMode === 'Road / Drive' || flights.primaryMode === 'Road') && flights.roadOption?.operators?.[0]
+                    ? `Corridor: ${flights.roadOption.operators[0]}`
+                    : flights.departureAirport && !isGroundOnly
+                      ? `Airport: ${flights.departureAirport}`
+                      : (flights.origin ? 'Departure Gateway' : 'Origin Location')}
             </div>
           </div>
 
@@ -322,14 +346,22 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
               {destination}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              {flights.arrivalAirport ? `Via ${flights.arrivalAirport}` : 'Arrival Gateway'}
+              {isMultiModal && flights.arrivalAirport
+                ? `Via ${flights.arrivalAirport}`
+                : flights.primaryMode === 'Train' && flights.trainOption?.terminals?.[1]
+                  ? `Station: ${flights.trainOption.terminals[1]}`
+                  : (flights.primaryMode === 'Road / Drive' || flights.primaryMode === 'Road')
+                    ? 'Direct Road Arrival'
+                    : flights.arrivalAirport && !isGroundOnly
+                      ? `Airport: ${flights.arrivalAirport}`
+                      : 'Arrival Gateway'}
             </div>
           </div>
         </div>
 
         {/* Airports & Carriers Chips */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-          {flights.airlines && flights.airlines.length > 0 && (
+          {flights.airlines && flights.airlines.length > 0 && !isGroundOnly && (
             <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-800/60">
               <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                 Recommended Carriers
@@ -347,7 +379,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
             </div>
           )}
 
-          {flights.airports && flights.airports.length > 0 && (
+          {flights.airports && flights.airports.length > 0 && !isGroundOnly && (
             <div className="p-4 rounded-2xl bg-slate-950/40 border border-slate-800/60">
               <div className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
                 Key Airports & Gateways

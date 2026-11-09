@@ -1,4 +1,4 @@
-"""Turns the destination into structured flight guidance using live web search and Pydantic."""
+"""Turns origin and destination into structured multi-modal transit guidance using live web search and Pydantic."""
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
@@ -6,7 +6,7 @@ from src.agents.prompts import FLIGHT_STRUCTURED_PROMPT
 from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
-from src.models.travel_models import FlightInfo
+from src.models.travel_models import TransitInfo
 from src.utils.async_utils import bump_llm_calls, run_async, truncate
 
 
@@ -35,14 +35,14 @@ def flight_agent(state: TravelState):
         search_context = f"Direct and regional transit options connecting {origin or 'origin'} and {destination}."
 
     try:
-        structured_llm = get_structured_llm(FlightInfo)
+        structured_llm = get_structured_llm(TransitInfo)
         prompt = FLIGHT_STRUCTURED_PROMPT.format(
             origin=origin or "Departure city",
             destination=destination,
             flight_data=search_context,
         )
 
-        flight_info: FlightInfo = structured_llm.invoke([
+        flight_info: TransitInfo = structured_llm.invoke([
             SystemMessage(content="You are an expert travel and transit analyst. Emit strictly structured transit data covering flights, trains, and road options with all fares quoted in Indian Rupees (₹ / INR)."),
             HumanMessage(content=prompt),
         ])
@@ -51,9 +51,26 @@ def flight_agent(state: TravelState):
         if destination and not flight_info.destination:
             flight_info.destination = destination
 
+        # Sanitize: if departure and arrival airports are identical, flying is impossible
+        if flight_info.departure_airport and flight_info.arrival_airport:
+            if flight_info.departure_airport.strip().lower() == flight_info.arrival_airport.strip().lower():
+                flight_info.departure_airport = None
+                flight_info.arrival_airport = None
+                flight_info.origin_to_airport_transit = None
+                flight_info.airport_to_destination_transit = None
+                flight_info.duration = None
+                flight_info.fare_range = None
+                flight_info.airlines = []
+                flight_info.airports = []
+
+        # If primary mode is purely road or train and no flight duration is provided, ground transfers to airports do not apply
+        if flight_info.primary_mode in ("Road / Drive", "Road", "Train") and not flight_info.duration:
+            flight_info.origin_to_airport_transit = None
+            flight_info.airport_to_destination_transit = None
+
     except Exception as e:
         if existing_model:
-            flight_info = FlightInfo(**existing_model)
+            flight_info = TransitInfo(**existing_model)
         else:
             raise RuntimeError(f"FlightAgent failed to scout flight routes for '{destination}': {e}") from e
 

@@ -5,6 +5,8 @@ from src.models.travel_models import (
     HotelOption,
     ItineraryDayPlan,
     ItineraryPlan,
+    TransitInfo,
+    TransitOption,
     TravelIntent,
     TripPlan,
     WeatherPlan,
@@ -12,6 +14,8 @@ from src.models.travel_models import (
 
 __all__ = [
     "TravelIntent",
+    "TransitInfo",
+    "TransitOption",
     "FlightInfo",
     "HotelOption",
     "HotelList",

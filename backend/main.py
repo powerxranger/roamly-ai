@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from src.config.settings import CORS_ORIGINS, GROQ_API_KEY
-from src.graph.runner import run_travel_agent
+from src.graph.runner import arun_travel_agent, run_travel_agent
 
 # This is to allow nested event loops for async calls in FastAPI
 import nest_asyncio
@@ -101,7 +101,7 @@ async def travel_planner(request_data: TravelRequest):
                 }
             )
 
-        result = run_travel_agent(
+        result = await arun_travel_agent(
             user_input=user_message,
             thread_id=request_data.thread_id
         )
