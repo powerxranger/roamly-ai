@@ -4,7 +4,7 @@ import time
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.agents.prompts import FINAL_STRUCTURED_PROMPT
-from src.clients.llm import get_llm
+from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.models.travel_models import ExecutiveSynthesis
 from src.utils.async_utils import bump_llm_calls, truncate
@@ -12,14 +12,14 @@ from src.utils.plan_builder import assemble_trip_plan
 
 
 def final_agent(state: TravelState):
-    # Pacing pause for Groq rate limits
-    time.sleep(1.5)
+    # Gentle pacing pause for Groq rate limits
+    time.sleep(0.5)
 
     destination = state.get("destination") or state.get("user_query", "")
     origin = state.get("origin") or state.get("intent", {}).get("origin") or ""
 
     try:
-        structured_llm = get_llm().with_structured_output(ExecutiveSynthesis)
+        structured_llm = get_structured_llm(ExecutiveSynthesis)
         prompt = FINAL_STRUCTURED_PROMPT.format(
             origin=origin or "Departure location",
             destination=destination,

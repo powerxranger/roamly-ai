@@ -4,7 +4,7 @@ import time
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.agents.prompts import ITINERARY_STRUCTURED_PROMPT
-from src.clients.llm import get_llm
+from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import ItineraryDayPlan, ItineraryPlan
@@ -21,8 +21,8 @@ def itinerary_agent(state: TravelState):
     if existing_itinerary and not needs_itinerary:
         return {}
 
-    # Pacing pause for Groq rate limits
-    time.sleep(1.5)
+    # Gentle pacing pause for Groq rate limits
+    time.sleep(0.5)
 
     destination = state.get("destination") or state.get("user_query", "")
     requested_duration = intent.get("duration_days")
@@ -49,7 +49,7 @@ def itinerary_agent(state: TravelState):
         refinement_context = f"The user requested this specific refinement: '{intent.get('refinement_summary')}'. Incorporate this while preserving unaffected days."
 
     try:
-        structured_llm = get_llm().with_structured_output(ItineraryPlan)
+        structured_llm = get_structured_llm(ItineraryPlan)
         prompt = ITINERARY_STRUCTURED_PROMPT.format(
             destination=destination,
             requested_duration=duration_label,

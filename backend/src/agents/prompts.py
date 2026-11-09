@@ -59,8 +59,8 @@ Provide:
 3. mode_recommendation: 2 to 3 practical sentences explaining which mode is best and why, comparing total travel time (including airport buffer), convenience, and cost.
 4. duration: Typical flight duration if flying is viable (e.g. '2h 45m direct'), or null if flying is not recommended or impractical for this distance.
 5. fare_range: Estimated roundtrip economy airfare in Indian Rupees (₹ / INR).
-6. airlines: Up to 4 major carriers operating routes between the airports.
-7. airports: Departure and arrival airport codes/names (e.g. ['DEL', 'BLR']).
+6. airlines: Up to 4 major carriers operating routes between the airports. If flying is not viable or not recommended, provide empty list [] or null.
+7. airports: Departure and arrival airport codes/names (e.g. ['DEL', 'BLR']). If not applicable, provide empty list [] or null.
 8. departure_airport: Serving departure airport (nearest commercial hub if {origin} has no commercial airport).
 9. arrival_airport: Serving arrival airport (nearest commercial hub if {destination} has no commercial airport).
 10. origin_to_airport_transit: Ground travel guidance from {origin} to departure airport if {origin} lacks an airport (mode, distance, travel time). Leave null if origin has its own airport.
@@ -69,16 +69,16 @@ Provide:
     - mode: 'Train'
     - duration: Typical train journey duration (e.g. '3h 45m')
     - fare_range: Estimated ticket fare range in INR (e.g. '₹900 - ₹1,800')
-    - operators: Key train names (e.g. ['Vande Bharat Express', 'Shatabdi'])
-    - terminals: Departure and arrival railway stations (e.g. ['New Delhi (NDLS)', 'Jaipur (JP)'])
+    - operators: Key train names (e.g. ['Vande Bharat Express', 'Shatabdi']) or empty list []
+    - terminals: Departure and arrival railway stations (e.g. ['New Delhi (NDLS)', 'Jaipur (JP)']) or empty list []
     - details: Train frequency or booking guidance
     Leave null if train travel is impossible or not viable.
 13. road_option: If road/driving travel is viable, provide:
     - mode: 'Road / Drive'
     - duration: Typical driving or bus duration (e.g. '4h 30m')
     - fare_range: Estimated private cab fare or bus ticket in INR (e.g. '₹3,500 - ₹5,000 for cab')
-    - operators: Key highway/expressway names or bus services (e.g. ['NH 48', 'Delhi-Jaipur Expressway'])
-    - terminals: Origin and destination city hubs
+    - operators: Key highway/expressway names or bus services (e.g. ['NH 48', 'Delhi-Jaipur Expressway']) or empty list []
+    - terminals: Origin and destination city hubs or empty list []
     - details: Driving distance in km and road conditions
     Leave null if driving is impossible or not viable.
 14. season_tips: Practical booking advice or advance purchase recommendations.

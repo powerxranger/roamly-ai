@@ -13,8 +13,8 @@ from src.models.travel_models import (
 def assemble_trip_plan(
     destination: str,
     overview_summary: str,
-    estimated_budget: str | None,
-    recommendations: list[str],
+    estimated_budget: str | None = None,
+    recommendations: list[str] | None = None,
     origin: str | None = None,
     flight_data: dict[str, Any] | None = None,
     hotel_data: list[dict[str, Any]] | None = None,

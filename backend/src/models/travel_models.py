@@ -3,7 +3,7 @@ Eliminates regex and string scraping across the entire agentic pipeline.
 """
 
 from typing import Literal, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class TravelIntent(BaseModel):
@@ -63,9 +63,14 @@ class TransitOption(BaseModel):
     mode: str = Field(..., description="Transport mode: e.g. 'Train', 'Road / Drive', 'Flight', 'Bus'")
     duration: Optional[str] = Field(default=None, description="Travel duration, e.g. '3h 45m'")
     fare_range: Optional[str] = Field(default=None, description="Estimated fare in INR, e.g. '₹900 - ₹1,800'")
-    operators: list[str] = Field(default_factory=list, description="Key train names, bus operators, or highway names (e.g. ['Vande Bharat Express', 'Shatabdi'])")
-    terminals: list[str] = Field(default_factory=list, description="Departure and arrival stations or hubs (e.g. ['New Delhi (NDLS)', 'Jaipur (JP)'])")
+    operators: Optional[list[str]] = Field(default_factory=list, description="Key train names, bus operators, or highway names (e.g. ['Vande Bharat Express', 'Shatabdi'])")
+    terminals: Optional[list[str]] = Field(default_factory=list, description="Departure and arrival stations or hubs (e.g. ['New Delhi (NDLS)', 'Jaipur (JP)'])")
     details: Optional[str] = Field(default=None, description="Practical travel guidance, distance, or route tips")
+
+    @field_validator("operators", "terminals", mode="before")
+    @classmethod
+    def coerce_transit_lists(cls, v):
+        return [] if v is None else v
 
 
 class FlightInfo(BaseModel):
@@ -103,8 +108,8 @@ class FlightInfo(BaseModel):
     )
     duration: Optional[str] = Field(default=None, description="Typical flight duration, e.g. '2h 45m direct', or null if flying is not recommended")
     fare_range: Optional[str] = Field(default=None, description="Estimated airfare range in INR, e.g. '₹7,000 - ₹14,000'")
-    airlines: list[str] = Field(default_factory=list, description="Top airlines operating route")
-    airports: list[str] = Field(default_factory=list, description="Primary airport codes/names")
+    airlines: Optional[list[str]] = Field(default_factory=list, description="Top airlines operating route, or empty list if flying is not viable")
+    airports: Optional[list[str]] = Field(default_factory=list, description="Primary airport codes/names, or empty list if not applicable")
     train_option: Optional[TransitOption] = Field(
         default=None,
         description="Train / Rail alternative if viable (duration, train names like Vande Bharat/Rajdhani, fare, stations)",
@@ -116,6 +121,11 @@ class FlightInfo(BaseModel):
     season_tips: Optional[str] = Field(default=None, description="Booking tips and seasonal advice")
     summary: str = Field(default="", description="Executive route and transit summary")
 
+    @field_validator("airlines", "airports", mode="before")
+    @classmethod
+    def coerce_flight_lists(cls, v):
+        return [] if v is None else v
+
 
 class HotelOption(BaseModel):
     """Structured accommodation recommendation emitted by Hotel Agent."""
@@ -126,14 +136,24 @@ class HotelOption(BaseModel):
     )
     price_range: Optional[str] = Field(default=None, description="Estimated nightly rate in INR, e.g. '₹12,000/night'")
     location: Optional[str] = Field(default=None, description="Neighborhood or area")
-    amenities: list[str] = Field(default_factory=list, description="Key amenities")
+    amenities: Optional[list[str]] = Field(default_factory=list, description="Key amenities")
     description: str = Field(default="", description="Hotel summary")
+
+    @field_validator("amenities", mode="before")
+    @classmethod
+    def coerce_amenities(cls, v):
+        return [] if v is None else v
 
 
 class HotelList(BaseModel):
     """Wrapper for Hotel Agent structured output."""
 
-    hotels: list[HotelOption] = Field(default_factory=list, description="Recommended hotel options")
+    hotels: Optional[list[HotelOption]] = Field(default_factory=list, description="Recommended hotel options")
+
+    @field_validator("hotels", mode="before")
+    @classmethod
+    def coerce_hotels(cls, v):
+        return [] if v is None else v
 
 
 class ItineraryDayPlan(BaseModel):
@@ -144,7 +164,12 @@ class ItineraryDayPlan(BaseModel):
     morning: Optional[str] = Field(default=None, description="Morning exploration and landmarks")
     afternoon: Optional[str] = Field(default=None, description="Afternoon cultural activity or scenic district")
     evening: Optional[str] = Field(default=None, description="Dinner recommendation or evening event")
-    highlights: list[str] = Field(default_factory=list, description="Key bulleted highlights")
+    highlights: Optional[list[str]] = Field(default_factory=list, description="Key bulleted highlights")
+
+    @field_validator("highlights", mode="before")
+    @classmethod
+    def coerce_highlights(cls, v):
+        return [] if v is None else v
 
 
 class ItineraryPlan(BaseModel):
@@ -152,7 +177,12 @@ class ItineraryPlan(BaseModel):
 
     duration_days: Optional[int] = Field(default=None, description="Total days in the itinerary")
     duration_rationale: Optional[str] = Field(default=None, description="Reasoning for recommended trip duration")
-    days: list[ItineraryDayPlan] = Field(default_factory=list, description="Ordered daily schedule")
+    days: Optional[list[ItineraryDayPlan]] = Field(default_factory=list, description="Ordered daily schedule")
+
+    @field_validator("days", mode="before")
+    @classmethod
+    def coerce_days(cls, v):
+        return [] if v is None else v
 
 
 class WeatherPlan(BaseModel):
@@ -161,8 +191,13 @@ class WeatherPlan(BaseModel):
     current_conditions: Optional[str] = Field(default=None, description="Current meteorological conditions")
     temperature: Optional[str] = Field(default=None, description="Expected temperature range, e.g. '18°C - 24°C'")
     forecast_summary: Optional[str] = Field(default=None, description="Weather forecast overview")
-    packing_list: list[str] = Field(default_factory=list, description="Recommended essentials to pack")
+    packing_list: Optional[list[str]] = Field(default_factory=list, description="Recommended essentials to pack")
     source: Optional[str] = Field(default=None, description="Data source: 'openweather' or 'live_search'")
+
+    @field_validator("packing_list", mode="before")
+    @classmethod
+    def coerce_packing_list(cls, v):
+        return [] if v is None else v
 
 
 
@@ -171,7 +206,12 @@ class ExecutiveSynthesis(BaseModel):
 
     trip_summary: str = Field(..., description="Clear summary of the trip")
     estimated_budget: Optional[str] = Field(default=None, description="Total estimated budget range per traveler")
-    recommendations: list[str] = Field(default_factory=list, description="3-4 practical travel tips")
+    recommendations: Optional[list[str]] = Field(default_factory=list, description="3-4 practical travel tips")
+
+    @field_validator("recommendations", mode="before")
+    @classmethod
+    def coerce_recommendations(cls, v):
+        return [] if v is None else v
 
 
 class TripPlan(BaseModel):
@@ -183,7 +223,12 @@ class TripPlan(BaseModel):
     estimated_budget: Optional[str] = Field(default=None, description="Total budget estimate")
     overview_summary: str = Field(..., description="Trip overview summary")
     flights: FlightInfo = Field(default_factory=FlightInfo)
-    hotels: list[HotelOption] = Field(default_factory=list)
-    itinerary_days: list[ItineraryDayPlan] = Field(default_factory=list)
+    hotels: Optional[list[HotelOption]] = Field(default_factory=list)
+    itinerary_days: Optional[list[ItineraryDayPlan]] = Field(default_factory=list)
     weather: WeatherPlan = Field(default_factory=WeatherPlan)
-    recommendations: list[str] = Field(default_factory=list)
+    recommendations: Optional[list[str]] = Field(default_factory=list)
+
+    @field_validator("hotels", "itinerary_days", "recommendations", mode="before")
+    @classmethod
+    def coerce_trip_plan_lists(cls, v):
+        return [] if v is None else v

@@ -3,7 +3,7 @@
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from src.agents.prompts import ROUTER_SYSTEM_PROMPT
-from src.clients.llm import get_llm
+from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.models.travel_models import TravelIntent
 from src.utils.async_utils import bump_llm_calls
@@ -24,11 +24,9 @@ def router_agent(state: TravelState) -> dict:
         user_query=user_query,
     )
 
-    llm = get_llm()
-
     try:
-        # Structured output backed by Pydantic
-        structured_llm = llm.with_structured_output(TravelIntent)
+        # Structured output backed by Pydantic with native json_schema
+        structured_llm = get_structured_llm(TravelIntent)
         intent: TravelIntent = structured_llm.invoke([
             SystemMessage(content="You are a precise JSON travel router."),
             HumanMessage(content=prompt),

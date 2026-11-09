@@ -3,7 +3,7 @@
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.agents.prompts import FLIGHT_STRUCTURED_PROMPT
-from src.clients.llm import get_llm
+from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import FlightInfo
@@ -29,7 +29,7 @@ def flight_agent(state: TravelState):
             search_query = f"how to reach {destination} nearest airport flights train bus road distance duration INR rupees"
         flight_search_results = run_async(tavily_mcp_search(search_query))
 
-        structured_llm = get_llm().with_structured_output(FlightInfo)
+        structured_llm = get_structured_llm(FlightInfo)
         prompt = FLIGHT_STRUCTURED_PROMPT.format(
             origin=origin or "Departure city",
             destination=destination,

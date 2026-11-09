@@ -16,3 +16,8 @@ def get_llm() -> ChatGroq:
         temperature=0.2,
         max_retries=3,
     )
+
+
+def get_structured_llm(schema):
+    """Return a structured output LLM using native json_schema to avoid tool-call naming hallucinations."""
+    return get_llm().with_structured_output(schema, method="json_schema")

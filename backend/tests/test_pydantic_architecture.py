@@ -186,6 +186,59 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertIsNotNone(flights["road_option"])
         self.assertEqual(flights["road_option"]["duration"], "4h 30m")
 
+    def test_regional_transit_null_airlines_and_airports_coercion(self):
+        """Verify that when an LLM returns null for airlines or airports on regional routes,
+        Pydantic cleanly coerces them to empty lists and generates schema allowing null."""
+        flight_data = {
+            "origin": "Faridabad",
+            "destination": "Mathura",
+            "route_type": "Short Regional Route",
+            "primary_mode": "Train",
+            "mode_recommendation": "For the 140 km Faridabad-Mathura corridor, rail is the fastest option.",
+            "duration": None,
+            "fare_range": None,
+            "airlines": None,  # Simulated Groq LLM tool output when flight is not viable
+            "airports": None,  # Simulated Groq LLM tool output
+            "train_option": {
+                "mode": "Train",
+                "duration": "2h 30m",
+                "fare_range": "₹250 - ₹800",
+                "operators": None,
+                "terminals": None,
+                "details": "Frequent daily trains.",
+            },
+            "road_option": None,
+            "season_tips": "Book early.",
+            "summary": "Faridabad to Mathura is best by train.",
+        }
+
+        # Direct model parsing
+        model = FlightInfo(**flight_data)
+        self.assertEqual(model.airlines, [])
+        self.assertEqual(model.airports, [])
+        self.assertIsNotNone(model.train_option)
+        self.assertEqual(model.train_option.operators, [])
+        self.assertEqual(model.train_option.terminals, [])
+
+        # Schema verification: anyOf should allow null so Groq tool validator never rejects tool call
+        schema = FlightInfo.model_json_schema()
+        airlines_schema = schema["properties"]["airlines"]
+        self.assertIn("anyOf", airlines_schema)
+        allowed_types = [branch.get("type") for branch in airlines_schema["anyOf"]]
+        self.assertIn("null", allowed_types)
+        self.assertIn("array", allowed_types)
+
+        # Plan assembly verification
+        plan_dict = assemble_trip_plan(
+            destination="Mathura",
+            origin="Faridabad",
+            overview_summary="Trip to Mathura.",
+            flight_data=flight_data,
+        )
+        self.assertEqual(plan_dict["flights"]["airlines"], [])
+        self.assertEqual(plan_dict["flights"]["airports"], [])
+        self.assertEqual(plan_dict["flights"]["primary_mode"], "Train")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -5,7 +5,7 @@ from typing import Any
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.agents.prompts import WEATHER_STRUCTURED_PROMPT
-from src.clients.llm import get_llm
+from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.local import forecast_mcp_search, weather_mcp_search
 from src.mcp_servers.remote import tavily_mcp_search
@@ -74,7 +74,7 @@ def weather_agent(state: TravelState):
             forecast_summary = json.dumps(forecast_dict.get("forecast", forecast_dict), indent=2)
             weather_data = f"Current Observations:\n{current_summary}\n\nUpcoming Forecast:\n{forecast_summary}"
 
-            structured_llm = get_llm().with_structured_output(WeatherPlan)
+            structured_llm = get_structured_llm(WeatherPlan)
             prompt = WEATHER_STRUCTURED_PROMPT.format(
                 destination=city,
                 weather_data=weather_data,
@@ -101,7 +101,7 @@ def weather_agent(state: TravelState):
             search_query = f"current weather temperature and forecast in {city} climate conditions"
             weather_search_results = run_async(tavily_mcp_search(search_query))
 
-            structured_llm = get_llm().with_structured_output(WeatherPlan)
+            structured_llm = get_structured_llm(WeatherPlan)
             prompt = WEATHER_STRUCTURED_PROMPT.format(
                 destination=city,
                 weather_data=truncate(weather_search_results, 1500),

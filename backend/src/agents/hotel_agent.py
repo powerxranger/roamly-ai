@@ -3,7 +3,7 @@
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.agents.prompts import HOTEL_STRUCTURED_PROMPT
-from src.clients.llm import get_llm
+from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import HotelList, HotelOption
@@ -25,7 +25,7 @@ def hotel_agent(state: TravelState):
         search_query = f"best hotels accommodations in {destination} luxury boutique rates INR rupees per night"
         hotel_search_results = run_async(tavily_mcp_search(search_query))
 
-        structured_llm = get_llm().with_structured_output(HotelList)
+        structured_llm = get_structured_llm(HotelList)
         prompt = HOTEL_STRUCTURED_PROMPT.format(
             destination=destination,
             hotel_data=truncate(hotel_search_results, 1500),
