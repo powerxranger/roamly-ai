@@ -49,22 +49,23 @@ export function parseTripResponse(
         temperature: data.plan.weather.temperature,
         forecastSummary: data.plan.weather.forecast_summary,
         packingList: data.plan.weather.packing_list,
+        source: data.plan.weather.source,
         rawText: data.plan.weather.raw_text || data.weather_results || '',
       },
       recommendations: data.plan.recommendations || [],
     };
   }
 
-  // Default fallback if backend plan payload is somehow missing (Zero regex)
+  // Fallback structure if backend plan payload is missing (Zero regex)
   return {
-    destinationTitle: data.destination || baseQuery || query || 'Custom Trip',
-    durationLabel: '7 Days',
-    overviewSummary: data.answer || 'Travel plan generated for your trip.',
+    destinationTitle: data.destination || baseQuery || query || '',
+    durationLabel: '',
+    overviewSummary: data.answer || '',
     flights: { rawText: data.flight_results || '' },
     hotels: [],
     itineraryDays: [],
     weather: {
-      packingList: ['Comfortable walking shoes', 'Universal power adapter', 'Weather-appropriate layers'],
+      packingList: [],
       rawText: data.weather_results || '',
     },
     recommendations: [],

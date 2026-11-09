@@ -64,9 +64,20 @@ export const WeatherWidget: React.FC<WeatherWidgetProps> = ({ weather, destinati
                   <CloudSun className="h-6 w-6" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-white tracking-tight">
-                    Seasonal Climate Outlook
-                  </h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-lg font-bold text-white tracking-tight">
+                      Seasonal Climate Outlook
+                    </h4>
+                    {weather.source && (
+                      <span className={`px-2 py-0.5 text-[10px] font-semibold rounded-full border ${
+                        weather.source === 'openweather'
+                          ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                          : 'bg-blue-500/10 border-blue-500/20 text-blue-400'
+                      }`}>
+                        {weather.source === 'openweather' ? 'OpenWeather' : 'Live Search'}
+                      </span>
+                    )}
+                  </div>
                   <p className="text-xs text-slate-400">
                     Live meteorological analysis for {destination}
                   </p>

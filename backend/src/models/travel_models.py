@@ -109,6 +109,8 @@ class WeatherPlan(BaseModel):
     temperature: Optional[str] = Field(default=None, description="Expected temperature range, e.g. '18°C - 24°C'")
     forecast_summary: Optional[str] = Field(default=None, description="Weather forecast overview")
     packing_list: list[str] = Field(default_factory=list, description="Recommended essentials to pack")
+    source: Optional[str] = Field(default="openweather", description="Data source: 'openweather' or 'live_search'")
+
 
 
 class ExecutiveSynthesis(BaseModel):

@@ -38,6 +38,7 @@ export interface TravelPlanPayload {
     temperature?: string;
     forecast_summary?: string;
     packing_list: string[];
+    source?: string;
     raw_text: string;
   };
   recommendations: string[];
@@ -72,16 +73,20 @@ export interface HealthResponse {
   missing: string[];
 }
 
-export type ConciergeTaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
+export type PlannerTaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed';
 
-export interface ConciergeTask {
+export interface PlannerTask {
   id: string;
   label: string;
   sublabel: string;
   icon: 'flight' | 'hotel' | 'weather' | 'itinerary' | 'synthesis';
-  status: ConciergeTaskStatus;
+  status: PlannerTaskStatus;
   technicalRole: string;
 }
+
+// Backward compatibility alias
+export type ConciergeTask = PlannerTask;
+export type ConciergeTaskStatus = PlannerTaskStatus;
 
 export interface AgentProgress {
   id: string;
@@ -127,6 +132,7 @@ export interface ParsedWeatherInfo {
   temperature?: string;
   forecastSummary?: string;
   packingList: string[];
+  source?: string;
   rawText: string;
 }
 
