@@ -816,6 +816,21 @@ async def travel_planner(request_data: TravelRequest):
         raise ValueError("GROQ_API_KEY is missing.")
     return GROQ_API_KEY`
   },
+  router: {
+    tag: "LangGraph Entry Node",
+    tagColor: "var(--blue)",
+    tagBg: "var(--blue-dim)",
+    title: "Semantic Router (Supervisor)",
+    desc: "Classifies user intent semantically using Pydantic TravelIntent structured output. Eliminates keyword matching and dynamically gates downstream agents.",
+    pills: ["src/agents/router_agent.py", "Pydantic Structured Output", "Zero Keyword Checks"],
+    code: `structured_llm = llm.with_structured_output(TravelIntent)
+intent = structured_llm.invoke([
+    SystemMessage(content="You are a precise JSON travel router."),
+    HumanMessage(content=prompt),
+])`
+  },
+  session: {
+    tag: "Credential Context",
     tagColor: "var(--purple)",
     tagBg: "var(--purple-dim)",
     title: "ContextVar Credential Binding",

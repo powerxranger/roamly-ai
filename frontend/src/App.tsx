@@ -14,6 +14,7 @@ import { ConciergeRadar } from './components/ConciergeRadar';
 import { ResultsViewer } from './components/ResultsViewer';
 import { SamplePrompts } from './components/SamplePrompts';
 import { TechSpecsDrawer } from './components/TechSpecsDrawer';
+import { UserQueryCard } from './components/UserQueryCard';
 import { ConciergeTask, TravelSuccessResponse } from './types';
 import { checkHealth, planTravel, ApiError } from './api';
 
@@ -62,7 +63,9 @@ const INITIAL_CONCIERGE_TASKS: ConciergeTask[] = [
 
 export const App: React.FC = () => {
   const [query, setQuery] = useState('');
+  const [initialQuery, setInitialQuery] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
+  const [refinements, setRefinements] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [tasks, setTasks] = useState<ConciergeTask[]>(INITIAL_CONCIERGE_TASKS);
@@ -102,15 +105,13 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  const handlePromptSelect = (selectedPrompt: string) => {
-    setQuery(selectedPrompt);
-  };
-
   const handleResetTrip = () => {
     setResults(null);
     setError(null);
     setQuery('');
+    setInitialQuery('');
     setActiveQuery('');
+    setRefinements([]);
     setThreadId(null);
     setTasks(INITIAL_CONCIERGE_TASKS);
   };
@@ -121,14 +122,35 @@ export const App: React.FC = () => {
 
     setError(null);
     setIsProcessing(true);
-    setActiveQuery(textToSubmit);
     setQuery(''); // Clear input for next prompt
+
+    const isRefining = Boolean(initialQuery && results);
+
+    if (!initialQuery) {
+      setInitialQuery(textToSubmit);
+      setActiveQuery(textToSubmit);
+    } else {
+      setRefinements(prev => [...prev, textToSubmit]);
+      setActiveQuery(textToSubmit);
+    }
 
     // Phase 1: Parallel scout tasks are activated concurrently
     setTasks([
-      { ...INITIAL_CONCIERGE_TASKS[0], status: 'in_progress' },
-      { ...INITIAL_CONCIERGE_TASKS[1], status: 'in_progress' },
-      { ...INITIAL_CONCIERGE_TASKS[2], status: 'in_progress' },
+      {
+        ...INITIAL_CONCIERGE_TASKS[0],
+        status: 'in_progress',
+        sublabel: isRefining ? 'Evaluating flight adjustments...' : INITIAL_CONCIERGE_TASKS[0].sublabel
+      },
+      {
+        ...INITIAL_CONCIERGE_TASKS[1],
+        status: 'in_progress',
+        sublabel: isRefining ? 'Checking accommodations alignment...' : INITIAL_CONCIERGE_TASKS[1].sublabel
+      },
+      {
+        ...INITIAL_CONCIERGE_TASKS[2],
+        status: 'in_progress',
+        sublabel: isRefining ? 'Verifying regional climate...' : INITIAL_CONCIERGE_TASKS[2].sublabel
+      },
       { ...INITIAL_CONCIERGE_TASKS[3], status: 'pending' },
       { ...INITIAL_CONCIERGE_TASKS[4], status: 'pending' },
     ]);
@@ -139,7 +161,11 @@ export const App: React.FC = () => {
         ['flight_scout', 'stays_curator', 'climate_intel'].includes(t.id)
           ? { ...t, status: 'completed' }
           : t.id === 'journey_architect'
-          ? { ...t, status: 'in_progress' }
+          ? {
+              ...t,
+              status: 'in_progress',
+              sublabel: isRefining ? 'Re-architecting day schedule with adjustments...' : t.sublabel
+            }
           : t
       ));
     }, 4500);
@@ -149,7 +175,11 @@ export const App: React.FC = () => {
         t.id === 'journey_architect'
           ? { ...t, status: 'completed' }
           : t.id === 'master_concierge'
-          ? { ...t, status: 'in_progress' }
+          ? {
+              ...t,
+              status: 'in_progress',
+              sublabel: isRefining ? 'Synthesizing updated dossier...' : t.sublabel
+            }
           : t
       ));
     }, 8500);
@@ -310,32 +340,34 @@ export const App: React.FC = () => {
           /* ==================================================================== */
           /* SCENARIO B: ACTIVE DOSSIER STATE (Results & Live Radar take center stage) */
           /* ==================================================================== */
-          <div className="space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
 
-            {/* Top Toolbar: Back / New Trip Reset */}
-            <div className="flex items-center justify-between gap-4 pb-2">
+            {/* Top Toolbar: Plan Another Trip / New Search */}
+            <div className="flex items-center justify-between gap-4 pb-1">
               <button
                 type="button"
                 onClick={handleResetTrip}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white border border-slate-800 transition shadow-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900/90 hover:bg-slate-850 text-xs font-semibold text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 transition shadow-sm"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 <span>Plan Another Trip</span>
               </button>
 
-              <div className="text-xs text-slate-400 font-medium truncate max-w-md hidden sm:block">
-                Query: <span className="text-slate-200 italic">"{activeQuery}"</span>
-              </div>
-
               <button
                 type="button"
                 onClick={handleResetTrip}
-                className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-semibold"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-900/90 hover:bg-slate-850 text-xs font-semibold text-blue-400 hover:text-blue-300 border border-slate-800 hover:border-slate-700 transition"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span>New Search</span>
               </button>
             </div>
+
+            {/* Prominent User Prompt & Refinement History Card */}
+            <UserQueryCard
+              initialQuery={initialQuery || activeQuery}
+              refinements={refinements}
+            />
 
             {/* Error Alert Card */}
             {error && (
@@ -357,7 +389,7 @@ export const App: React.FC = () => {
             )}
 
             {/* Live Concierge Radar */}
-            <div className="max-w-4xl mx-auto w-full">
+            <div className="max-w-5xl mx-auto w-full">
               <ConciergeRadar
                 tasks={tasks}
                 isProcessing={isProcessing}
@@ -371,6 +403,7 @@ export const App: React.FC = () => {
                 <ResultsViewer
                   data={results}
                   query={activeQuery}
+                  baseQuery={initialQuery}
                   onOpenSpecs={() => setIsTechSpecsOpen(true)}
                 />
               </div>
@@ -396,7 +429,7 @@ export const App: React.FC = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isProcessing}
-              placeholder={isProcessing ? "Concierges scouting live travel streams..." : "Ask a refinement... e.g., 'Switch to boutique stays under $200' or 'Add day trip to Hakone'"}
+              placeholder={isProcessing ? "Concierges scouting live travel streams..." : "Ask a refinement... e.g. 'Add a day trip to Hakone on Day 4' or 'Switch to boutique stays under $200'"}
               className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none"
             />
 

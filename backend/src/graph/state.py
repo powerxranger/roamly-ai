@@ -1,26 +1,33 @@
 """Shared state passed between every node of the travel graph."""
 
 import operator
-from typing import Annotated, TypedDict
+from typing import Annotated, Any, Optional, TypedDict
 
-from langchain_core.messages import AnyMessage
+from langchain_core.messages import AnyMessage, HumanMessage
 
 
-class TravelState(TypedDict):
+class TravelState(TypedDict, total=False):
     messages: Annotated[list[AnyMessage], operator.add]
     user_query: str
     flight_results: str
     hotel_results: str
+    weather_results: str
     itinerary: str
     llm_calls: Annotated[int, operator.add]
-    weather_results: str
+
+    # Structured Pydantic state (Zero regex / string scraping)
+    destination: str
+    intent: Optional[dict[str, Any]]
+    flight_model: Optional[dict[str, Any]]
+    hotel_model: Optional[list[dict[str, Any]]]
+    itinerary_model: Optional[list[dict[str, Any]]]
+    weather_model: Optional[dict[str, Any]]
+    plan: Optional[dict[str, Any]]
+    followup_history: list[str]
 
 
 def initial_state(user_query: str) -> TravelState:
     """Build the empty state the graph starts from."""
-
-    from langchain_core.messages import HumanMessage
-
     return {
         "messages": [HumanMessage(content=user_query)],
         "user_query": user_query,
@@ -29,5 +36,12 @@ def initial_state(user_query: str) -> TravelState:
         "weather_results": "",
         "itinerary": "",
         "llm_calls": 0,
+        "destination": "",
+        "intent": None,
+        "flight_model": None,
+        "hotel_model": None,
+        "itinerary_model": None,
+        "weather_model": None,
+        "plan": None,
+        "followup_history": [],
     }
-

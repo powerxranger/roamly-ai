@@ -1,5 +1,5 @@
 import React from 'react';
-import { Compass, Sparkles } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 
 interface SamplePromptsProps {
   onSelectPrompt: (prompt: string) => void;

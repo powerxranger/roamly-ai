@@ -105,9 +105,17 @@ export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
             </h4>
 
             <div className="p-4 rounded-xl bg-slate-950/80 border border-slate-800/80 space-y-3 font-mono text-xs">
-              <div className="flex items-center gap-2 text-emerald-400 font-semibold">
+              <div className="flex items-center gap-2 text-blue-400 font-semibold">
                 <CheckCircle2 className="h-3.5 w-3.5" />
-                <span>START ➔ Parallel Fan-Out (3 Nodes)</span>
+                <span>START ➔ Semantic Router (router_agent)</span>
+              </div>
+              <div className="pl-5 text-[11px] text-slate-400 font-sans">
+                Evaluates user intent & trip state into Pydantic <code className="text-blue-300 font-mono">TravelIntent</code> (Zero keyword checks)
+              </div>
+
+              <div className="flex items-center gap-2 text-emerald-400 font-semibold pt-1">
+                <GitFork className="h-3.5 w-3.5" />
+                <span>Parallel Research Fan-Out (Gated by Intent)</span>
               </div>
 
               <div className="pl-5 space-y-1.5 text-slate-300">
@@ -132,7 +140,7 @@ export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
 
               <div className="flex items-center gap-2 text-sky-400 font-semibold">
                 <Server className="h-3.5 w-3.5" />
-                <span>Synthesis Node: final_agent ➔ END</span>
+                <span>Synthesis Node: final_agent (Structured TripPlan) ➔ END</span>
               </div>
             </div>
           </div>
@@ -146,6 +154,10 @@ export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
             <ul className="space-y-2 text-xs text-slate-300">
               <li className="flex items-start gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/60">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
+                <span><strong>Semantic Supervisor (Zero Keyword Hacks):</strong> Replaces brittle substring matching with a Pydantic <code className="text-blue-300 font-mono">TravelIntent</code> router that classifies conversational turns and emits typed JSON directly to the UI.</span>
+              </li>
+              <li className="flex items-start gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/60">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
                 <span><strong>Parallel Async Fan-Out:</strong> Cuts query response latency by ~60% compared to sequential agent chains.</span>
               </li>
               <li className="flex items-start gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/60">

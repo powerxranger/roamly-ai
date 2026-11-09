@@ -20,14 +20,15 @@ import { MarkdownRenderer } from './MarkdownRenderer';
 interface ResultsViewerProps {
   data: TravelSuccessResponse;
   query: string;
+  baseQuery?: string;
   onOpenSpecs: () => void;
 }
 
-export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, onOpenSpecs }) => {
+export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQuery, onOpenSpecs }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
 
   // Parse structured data from raw LLM responses
-  const parsedPlan = React.useMemo(() => parseTripResponse(query, data), [query, data]);
+  const parsedPlan = React.useMemo(() => parseTripResponse(query, data, baseQuery), [query, data, baseQuery]);
 
   const tabs: { id: ActiveTab; label: string; icon: React.ReactNode }[] = [
     {

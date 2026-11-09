@@ -1,111 +1,95 @@
-"""Every prompt template used by the travel agents."""
+"""Structured prompt templates used by the Roamly AI agents."""
 
-FLIGHT_SYSTEM_PROMPT = "You are an expert travel flight planner. Provide concise, high-value flight guidance."
+ROUTER_SYSTEM_PROMPT = """You are the Lead Travel Supervisor in an autonomous multi-agent concierge system.
+Analyze the user's travel request semantically to determine the required agent activations.
 
-FLIGHT_SEARCH_QUERY = "Flights for {user_query} airlines duration price"
+Existing Trip State:
+- Established Destination: {existing_destination}
+- Existing Flights Planned: {has_flights}
+- Existing Hotels Planned: {has_hotels}
+- Existing Itinerary Planned: {has_itinerary}
 
-FLIGHT_AGENT_PROMPT = """You are a travel flight expert.
+Query:
+{user_query}
 
-User Query:
-{query}
+Instructions:
+1. Determine the intent_type:
+   - 'initial_planning' for new journey requests
+   - 'refine_itinerary' for adjustments to days, activities, attractions, pacing, or day trips
+   - 'update_accommodations' for questions or changes to hotels, stays, or rooms
+   - 'update_transit' for flights, routes, airports, or airlines
+   - 'general_question' for climate, packing, etiquette, or general Q&A
 
-Flight Search Context:
-{flight_data}
+2. Determine boolean activation flags based on semantic meaning (NOT keyword matching):
+   - needs_flights: Set True ONLY if flights need initial scouting or the user asks for transit adjustments.
+   - needs_hotels: Set True ONLY if accommodations need initial scouting or the user asks for stay adjustments.
+   - needs_weather: Set True ONLY if initial trip and weather is missing, or user asks about climate/packing.
+   - needs_itinerary: Set True if initial trip, or user wants any change to activities, days, timing, or itinerary.
 
-Generate concise flight guidance:
-1. Departure & Arrival Airports: key hubs serving this route
-2. Major Airlines: top carriers
-3. Flight Duration: typical travel time (direct vs connecting)
-4. Estimated Airfare: price range per passenger roundtrip
-5. Booking Advice: best booking window and peak season tip
-
-Keep guidance realistic, structured, and under 220 words.
+3. Extract or preserve the primary destination (e.g. 'Tokyo & Kyoto, Japan'). Keep established destination unless user explicitly changes it.
+4. Extract primary_city as the single main municipality for weather lookups (e.g. 'Tokyo' if destination is 'Tokyo & Kyoto, Japan').
+5. Provide a clear refinement_summary describing what the user wants adjusted.
 """
 
+FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for travel to {destination}.
+Extract concrete, structured flight intelligence.
 
-ITINERARY_SYSTEM_PROMPT = "You are an expert travel itinerary planner. Provide clear, well-structured day-by-day plans."
+Search Context:
+{flight_data}
 
-ITINERARY_AGENT_PROMPT = """Create a structured day-by-day itinerary for: {user_query}
+Provide:
+1. duration: Realistic flight duration, e.g. '11-13 hours direct'
+2. fare_range: Estimated roundtrip coach/economy fare range, e.g. '$850 - $1,250'
+3. airlines: Up to 4 major carriers operating routes to this destination
+4. airports: Departure/arrival hub codes or names (e.g. ['HND', 'NRT'])
+5. season_tips: Key booking advice or peak season warning
+6. summary: 2-sentence executive summary of the flight landscape
+"""
+
+HOTEL_STRUCTURED_PROMPT = """Analyze the real-time accommodation search results for {destination}.
+Curate exactly 3 standout accommodation recommendations:
+1. One Luxury property (5-star, top amenities, upscale location)
+2. One Boutique property (charming neighborhood, character, mid-to-high tier)
+3. One Smart Value property (practical, great transit access, well-reviewed budget/mid-range)
+
+Search Context:
+{hotel_data}
+
+Return a list of 3 hotels with accurate name, tier, estimated nightly price_range, neighborhood location, and up to 4 key amenities.
+"""
+
+ITINERARY_STRUCTURED_PROMPT = """Create or refine a structured day-by-day travel itinerary for {destination}.
+
+Trip Parameters:
+- Planned Duration: {duration_days} Days
+- Transit Context: {flight_results}
+- Accommodation Context: {hotel_results}
+- Climate Forecast: {weather_results}
+
+Refinement Context (if modifying existing schedule):
+{refinement_context}
+
+Instructions:
+Emit an ordered list of days (Day 1 through Day {duration_days}).
+For each day:
+- day_number: integer (1, 2, 3...)
+- title: concise descriptive day theme
+- morning: key landmark, scenic area, or morning exploration
+- afternoon: afternoon cultural activity, neighborhood stroll, or scenic spot
+- evening: curated dinner recommendation or evening leisure
+- highlights: 2 to 3 concise bullet highlights
+"""
+
+FINAL_STRUCTURED_PROMPT = """Synthesize an executive travel overview and budget for a trip to {destination}.
 
 Context:
 - Flight Timing: {flight_results}
-- Stays & Location: {hotel_results}
-- Climate: {weather_results}
+- Stays & Sanctuaries: {hotel_results}
+- Climate Outlook: {weather_results}
+- Itinerary Preview: {itinerary}
 
-Format each day using this exact layout:
-
-### Day X: [Short Descriptive Day Title]
-- Morning: [Morning exploration, landmark, or walking tour]
-- Afternoon: [Afternoon cultural activity, scenic spot, or neighborhood]
-- Evening: [Dinner recommendation or relaxing evening activity]
-
-Keep each day practical, curated, and easy to follow. Under 400 words total.
-"""
-
-
-FINAL_SYSTEM_PROMPT = "You are a professional luxury AI travel concierge. Provide an executive summary, budget breakdown, and expert travel tips."
-
-FINAL_AGENT_PROMPT = """Synthesize the final executive travel overview and budget for:
-{user_query}
-
-Context:
-- Flights: {flight_results}
-- Hotels: {hotel_results}
-- Climate: {weather_results}
-- Itinerary Snapshot: {itinerary}
-
-Format the response using these exact sections:
-
-## Trip Summary
-A vivid, concise 2-paragraph overview highlighting the journey's atmosphere, key attractions, and optimal travel window.
-
-## Estimated Budget
-- Estimated Airfare: roundtrip range
-- Accommodations: nightly rate and total stay range
-- Daily Living & Activities: daily expense estimate
-- Total Estimated Budget: combined range per traveler
-
-## Final Recommendations
-- 3 to 4 essential insider tips regarding local transport, dining etiquette, reservations, and seasonal preparation.
-
-Keep the entire synthesis concise, elegant, and under 300 words.
-"""
-
-
-HOTEL_SEARCH_QUERY = "Best hotels for {user_query}"
-
-HOTEL_SYSTEM_PROMPT = "You are an expert accommodation planner. Provide curated hotel recommendations."
-
-HOTEL_AGENT_PROMPT = """You are a hotel and accommodation expert.
-
-User Query:
-{query}
-
-Hotel Search Context:
-{hotel_data}
-
-Generate 3 curated accommodation recommendations:
-1. Luxury: **[Hotel Name]** - location, estimated nightly rate, key luxury amenities
-2. Boutique: **[Hotel Name]** - neighborhood charm, estimated nightly rate, highlights
-3. Smart Value: **[Hotel Name]** - central location, estimated nightly rate, practicality
-
-Keep recommendations structured with bold hotel names, price ranges, and under 250 words total.
-"""
-
-
-WEATHER_RESULTS_TEMPLATE = """
-Current Weather:
-{weather_data}
-
-Forecast:
-{forecast_data}
-"""
-
-
-DESTINATION_EXTRACTION_PROMPT = """Extract only the destination city or country name from the query.
-
-Query:
-{query}
-
-Return only the destination name with no extra words.
+Provide:
+1. trip_summary: 2 vivid, polished paragraphs capturing the atmosphere, highlights, and best travel window.
+2. estimated_budget: Total estimated budget range per traveler (e.g. '$3,500 - $4,800 per person total').
+3. recommendations: 3 to 4 essential insider concierge tips for transport, reservations, and seasonal preparation.
 """

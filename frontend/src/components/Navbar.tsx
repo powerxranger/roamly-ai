@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plane, Cpu, CheckCircle2, AlertTriangle, ExternalLink, GitFork } from 'lucide-react';
+import { Plane, CheckCircle2, AlertTriangle, ExternalLink, GitFork } from 'lucide-react';
 
 interface NavbarProps {
   isOnline: boolean | null;
