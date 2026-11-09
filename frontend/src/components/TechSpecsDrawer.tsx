@@ -11,7 +11,7 @@ interface TechSpecsDrawerProps {
 export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
   isOpen,
   onClose,
-  llmCalls = 5,
+  llmCalls = 0,
   threadId,
 }) => {
   const [copied, setCopied] = React.useState(false);

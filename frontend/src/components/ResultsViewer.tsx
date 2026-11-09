@@ -57,7 +57,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
       icon: <CloudSun className="h-4 w-4" />,
     },
     {
-      id: 'dossier',
+      id: 'full_plan',
       label: 'Full Plan',
       icon: <FileText className="h-4 w-4" />,
     },
@@ -117,10 +117,10 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                     <span className="text-slate-500 font-normal">{parsedPlan.durationLabel}</span>
                   </div>
                   <h4 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors">
-                    {parsedPlan.itineraryDays[0]?.title || 'Daily Schedule'}
+                    {parsedPlan.itineraryDays[0]?.title || 'Day-by-Day Itinerary'}
                   </h4>
                   <p className="text-xs text-slate-400 mt-1 line-clamp-3 leading-relaxed">
-                    {parsedPlan.itineraryDays[0]?.morning || parsedPlan.itineraryDays[0]?.rawText.slice(0, 120) || 'Custom day-by-day exploration.'}
+                    {parsedPlan.itineraryDays[0]?.morning || parsedPlan.itineraryDays[0]?.rawText.slice(0, 120) || ''}
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-blue-400 font-semibold group-hover:translate-x-0.5 transition-transform">
@@ -145,10 +145,10 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                     )}
                   </div>
                   <h4 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors">
-                    {parsedPlan.flights.duration || 'Optimal Flight Routes'}
+                    {parsedPlan.flights.duration || 'Flight Information'}
                   </h4>
                   <p className="text-xs text-slate-400 mt-1 line-clamp-3 leading-relaxed">
-                    {parsedPlan.flights.airlines?.join(', ') || parsedPlan.flights.seasonTips || 'Available flight routes.'}
+                    {parsedPlan.flights.airlines?.join(', ') || parsedPlan.flights.seasonTips || ''}
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-blue-400 font-semibold group-hover:translate-x-0.5 transition-transform">
@@ -171,10 +171,10 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                     <span className="text-slate-500 font-normal">{parsedPlan.hotels.length} Options</span>
                   </div>
                   <h4 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
-                    {parsedPlan.hotels[0]?.name || 'Recommended Stays'}
+                    {parsedPlan.hotels[0]?.name || 'Accommodations'}
                   </h4>
                   <p className="text-xs text-slate-400 mt-1 line-clamp-3 leading-relaxed">
-                    {parsedPlan.hotels[0]?.location || parsedPlan.hotels[0]?.description.slice(0, 120) || 'Selected hotels.'}
+                    {parsedPlan.hotels[0]?.location || parsedPlan.hotels[0]?.description.slice(0, 120) || ''}
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-purple-400 font-semibold group-hover:translate-x-0.5 transition-transform">
@@ -236,7 +236,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
           />
         )}
 
-        {activeTab === 'dossier' && (
+        {activeTab === 'full_plan' && (
           <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 sm:p-8 shadow-2xl">
             <div className="pb-4 mb-4 border-b border-slate-800 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">

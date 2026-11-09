@@ -46,14 +46,19 @@ def hotel_agent(state: TravelState):
 
     model_dicts = [h.model_dump() for h in hotels]
 
-    formatted_text = "\n\n".join([
-        f"### {h.tier}: **{h.name}**\n"
-        f"- Nightly Rate: {h.price_range or 'Rates on request'}\n"
-        f"- Location: {h.location or destination}\n"
-        f"- Amenities: {', '.join(h.amenities)}\n"
-        f"- Overview: {h.description}"
-        for h in hotels
-    ])
+    hotel_blocks = []
+    for h in hotels:
+        h_lines = [f"### {h.tier}: **{h.name}**"]
+        if h.price_range:
+            h_lines.append(f"- Nightly Rate: {h.price_range}")
+        if h.location:
+            h_lines.append(f"- Location: {h.location}")
+        if h.amenities:
+            h_lines.append(f"- Amenities: {', '.join(h.amenities)}")
+        if h.description:
+            h_lines.append(f"- Overview: {h.description}")
+        hotel_blocks.append("\n".join(h_lines))
+    formatted_text = "\n\n".join(hotel_blocks)
 
     return {
         "hotel_model": model_dicts,

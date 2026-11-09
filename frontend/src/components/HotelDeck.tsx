@@ -104,8 +104,8 @@ export const HotelDeck: React.FC<HotelDeckProps> = ({ hotels, rawText }) => {
             </div>
 
             {/* Amenities Pills */}
-            <div className="pt-4 mt-4 border-t border-slate-800/80">
-              {hotel.amenities && hotel.amenities.length > 0 ? (
+            {hotel.amenities && hotel.amenities.length > 0 && (
+              <div className="pt-4 mt-4 border-t border-slate-800/80">
                 <div className="flex flex-wrap gap-1.5">
                   {hotel.amenities.map((amenity, i) => (
                     <span
@@ -116,12 +116,8 @@ export const HotelDeck: React.FC<HotelDeckProps> = ({ hotels, rawText }) => {
                     </span>
                   ))}
                 </div>
-              ) : (
-                <div className="text-[11px] text-slate-500 italic">
-                  Verified accommodation details
-                </div>
-              )}
-            </div>
+              </div>
+            )}
 
           </div>
         ))}

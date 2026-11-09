@@ -76,7 +76,7 @@ export const App: React.FC = () => {
 
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // When user has submitted a query or results exist, switch from centered landing to active dossier mode
+  // When user has submitted a query or results exist, switch from centered landing to active results mode
   const hasStarted = isProcessing || !!results || !!error;
 
   // Poll backend health on initial load and every 60s
@@ -193,7 +193,7 @@ export const App: React.FC = () => {
       clearTimeout(stageTimer1);
       clearTimeout(stageTimer2);
 
-      // All concierge tasks complete
+      // All planning tasks complete
       setTasks(prev => prev.map(t => ({ ...t, status: 'completed' })));
       setResults(response);
       setThreadId(response.thread_id);
@@ -248,7 +248,7 @@ export const App: React.FC = () => {
       <TechSpecsDrawer
         isOpen={isTechSpecsOpen}
         onClose={() => setIsTechSpecsOpen(false)}
-        llmCalls={results?.llm_calls || 5}
+        llmCalls={results?.llm_calls ?? 0}
         threadId={threadId || undefined}
       />
 
@@ -338,7 +338,7 @@ export const App: React.FC = () => {
           </div>
         ) : (
           /* ==================================================================== */
-          /* SCENARIO B: ACTIVE DOSSIER STATE (Results & Live Radar take center stage) */
+          /* SCENARIO B: ACTIVE RESULTS STATE (Results & Live Radar take center stage) */
           /* ==================================================================== */
           <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
 

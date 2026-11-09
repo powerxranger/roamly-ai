@@ -83,14 +83,20 @@ def itinerary_agent(state: TravelState):
     else:
         header_text += "\n\n"
 
-    formatted_text = header_text + "\n\n".join([
-        f"### Day {d.day_number}: {d.title}\n"
-        f"- Morning: {d.morning or 'Morning sightseeing'}\n"
-        f"- Afternoon: {d.afternoon or 'Afternoon activities and local sights'}\n"
-        f"- Evening: {d.evening or 'Evening dinner and free time'}\n" +
-        "\n".join(f"- Highlight: {h}" for h in d.highlights)
-        for d in days
-    ])
+    day_blocks = []
+    for d in days:
+        d_lines = [f"### Day {d.day_number}: {d.title}"]
+        if d.morning:
+            d_lines.append(f"- Morning: {d.morning}")
+        if d.afternoon:
+            d_lines.append(f"- Afternoon: {d.afternoon}")
+        if d.evening:
+            d_lines.append(f"- Evening: {d.evening}")
+        if d.highlights:
+            d_lines.extend(f"- Highlight: {h}" for h in d.highlights)
+        day_blocks.append("\n".join(d_lines))
+
+    formatted_text = header_text + "\n\n".join(day_blocks)
 
     return {
         "itinerary_model": model_dicts,

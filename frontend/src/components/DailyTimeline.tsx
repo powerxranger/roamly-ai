@@ -30,7 +30,7 @@ export const DailyTimeline: React.FC<DailyTimelineProps> = ({ days, rawText }) =
             Day-by-Day Journey
           </span>
           <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Curated Daily Itinerary
+            Daily Itinerary
           </h3>
         </div>
 
@@ -102,43 +102,49 @@ export const DailyTimeline: React.FC<DailyTimelineProps> = ({ days, rawText }) =
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6">
 
             {/* Morning */}
-            <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider mb-2">
-                  <Sunrise className="h-4 w-4" />
-                  <span>Morning</span>
+            {activeDayData.morning && (
+              <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-amber-400 text-xs font-bold uppercase tracking-wider mb-2">
+                    <Sunrise className="h-4 w-4" />
+                    <span>Morning</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    {activeDayData.morning}
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {activeDayData.morning || 'Leisurely breakfast and regional morning exploration.'}
-                </p>
               </div>
-            </div>
+            )}
 
             {/* Afternoon */}
-            <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-wider mb-2">
-                  <Sun className="h-4 w-4" />
-                  <span>Afternoon</span>
+            {activeDayData.afternoon && (
+              <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-sky-400 text-xs font-bold uppercase tracking-wider mb-2">
+                    <Sun className="h-4 w-4" />
+                    <span>Afternoon</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    {activeDayData.afternoon}
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {activeDayData.afternoon || 'Cultural landmarks, guided tours, and neighborhood immersion.'}
-                </p>
               </div>
-            </div>
+            )}
 
             {/* Evening */}
-            <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">
-                  <Moon className="h-4 w-4" />
-                  <span>Evening & Dinner</span>
+            {activeDayData.evening && (
+              <div className="p-5 rounded-2xl bg-slate-950/60 border border-slate-800/80 flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 text-purple-400 text-xs font-bold uppercase tracking-wider mb-2">
+                    <Moon className="h-4 w-4" />
+                    <span>Evening & Dinner</span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    {activeDayData.evening}
+                  </p>
                 </div>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  {activeDayData.evening || 'Artisanal local dining, sunset viewpoints, and nighttime stroll.'}
-                </p>
               </div>
-            </div>
+            )}
 
           </div>
 
