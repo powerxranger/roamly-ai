@@ -20,13 +20,18 @@ def flight_agent(state: TravelState):
         return {}
 
     destination = state.get("destination") or state.get("user_query", "")
+    origin = state.get("origin") or intent.get("origin") or ""
 
     try:
-        search_query = f"flights to {destination} duration airlines airfare roundtrip INR rupees"
+        if origin:
+            search_query = f"flights from {origin} to {destination} nonstop duration airlines airfare roundtrip INR rupees"
+        else:
+            search_query = f"flights to {destination} duration airlines airfare roundtrip INR rupees"
         flight_search_results = run_async(tavily_mcp_search(search_query))
 
         structured_llm = get_llm().with_structured_output(FlightInfo)
         prompt = FLIGHT_STRUCTURED_PROMPT.format(
+            origin=origin or "Departure city",
             destination=destination,
             flight_data=truncate(flight_search_results, 1500),
         )
@@ -35,6 +40,8 @@ def flight_agent(state: TravelState):
             SystemMessage(content="You are an expert flight data analyst. Emit strictly structured flight data with all fares quoted in Indian Rupees (₹ / INR)."),
             HumanMessage(content=prompt),
         ])
+        if origin and not flight_info.origin:
+            flight_info.origin = origin
 
     except Exception as e:
         if existing_model:
@@ -43,14 +50,22 @@ def flight_agent(state: TravelState):
             raise RuntimeError(f"FlightAgent failed to scout flight routes for '{destination}': {e}") from e
 
     model_dict = flight_info.model_dump()
-    formatted_text = (
-        f"Flight Duration: {flight_info.duration or 'Direct & 1-stop available'}\n"
-        f"Estimated Airfare: {flight_info.fare_range or 'Varies by season'}\n"
-        f"Major Airlines: {', '.join(flight_info.airlines)}\n"
-        f"Serving Airports: {', '.join(flight_info.airports)}\n"
-        f"Booking Advice: {flight_info.season_tips or 'Book 6-8 weeks in advance.'}\n\n"
-        f"{flight_info.summary}"
-    )
+    flight_lines = []
+    if flight_info.origin:
+        flight_lines.append(f"Departure Origin: {flight_info.origin}")
+    if flight_info.duration:
+        flight_lines.append(f"Flight Duration: {flight_info.duration}")
+    if flight_info.fare_range:
+        flight_lines.append(f"Estimated Airfare: {flight_info.fare_range}")
+    if flight_info.airlines:
+        flight_lines.append(f"Major Airlines: {', '.join(flight_info.airlines)}")
+    if flight_info.airports:
+        flight_lines.append(f"Serving Airports: {', '.join(flight_info.airports)}")
+    if flight_info.season_tips:
+        flight_lines.append(f"Booking Advice: {flight_info.season_tips}")
+    if flight_info.summary:
+        flight_lines.append(f"\n{flight_info.summary}")
+    formatted_text = "\n".join(flight_lines)
 
     return {
         "flight_model": model_dict,

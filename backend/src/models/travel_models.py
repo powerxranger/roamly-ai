@@ -21,7 +21,11 @@ class TravelIntent(BaseModel):
     )
     destination: str = Field(
         ...,
-        description="The primary target destination (e.g. 'Tokyo & Kyoto, Japan').",
+        description="The primary target destination (e.g. 'Tokyo & Kyoto, Japan', 'Bangalore').",
+    )
+    origin: Optional[str] = Field(
+        default=None,
+        description="The departure city or origin if specified by the user (e.g. 'Delhi' from 'delhi to bangalore', 'Mumbai', 'New York'). None if unspecified.",
     )
     primary_city: str = Field(
         default="",
@@ -56,8 +60,9 @@ class TravelIntent(BaseModel):
 class FlightInfo(BaseModel):
     """Structured flight intelligence emitted directly by Flight Agent."""
 
-    duration: Optional[str] = Field(default=None, description="Typical flight duration, e.g. '12-14 hrs direct'")
-    fare_range: Optional[str] = Field(default=None, description="Estimated airfare range, e.g. '$850 - $1,250'")
+    origin: Optional[str] = Field(default=None, description="Departure location or hub code/name")
+    duration: Optional[str] = Field(default=None, description="Typical flight duration, e.g. '2h 45m direct' or '12-14 hrs direct'")
+    fare_range: Optional[str] = Field(default=None, description="Estimated airfare range in INR, e.g. '₹7,000 - ₹14,000'")
     airlines: list[str] = Field(default_factory=list, description="Top airlines operating route")
     airports: list[str] = Field(default_factory=list, description="Primary airport codes/names")
     season_tips: Optional[str] = Field(default=None, description="Booking tips and seasonal advice")
@@ -71,7 +76,7 @@ class HotelOption(BaseModel):
     tier: Literal["Luxury", "Boutique", "Value", "General"] = Field(
         default="General", description="Accommodation tier"
     )
-    price_range: Optional[str] = Field(default=None, description="Estimated nightly rate, e.g. '$240/night'")
+    price_range: Optional[str] = Field(default=None, description="Estimated nightly rate in INR, e.g. '₹12,000/night'")
     location: Optional[str] = Field(default=None, description="Neighborhood or area")
     amenities: list[str] = Field(default_factory=list, description="Key amenities")
     description: str = Field(default="", description="Hotel summary")
@@ -97,7 +102,7 @@ class ItineraryDayPlan(BaseModel):
 class ItineraryPlan(BaseModel):
     """Wrapper for Itinerary Agent structured output."""
 
-    duration_days: int = Field(default=5, description="Total days in the itinerary")
+    duration_days: Optional[int] = Field(default=None, description="Total days in the itinerary")
     duration_rationale: Optional[str] = Field(default=None, description="Reasoning for recommended trip duration")
     days: list[ItineraryDayPlan] = Field(default_factory=list, description="Ordered daily schedule")
 
@@ -109,7 +114,7 @@ class WeatherPlan(BaseModel):
     temperature: Optional[str] = Field(default=None, description="Expected temperature range, e.g. '18°C - 24°C'")
     forecast_summary: Optional[str] = Field(default=None, description="Weather forecast overview")
     packing_list: list[str] = Field(default_factory=list, description="Recommended essentials to pack")
-    source: Optional[str] = Field(default="openweather", description="Data source: 'openweather' or 'live_search'")
+    source: Optional[str] = Field(default=None, description="Data source: 'openweather' or 'live_search'")
 
 
 
@@ -125,6 +130,7 @@ class TripPlan(BaseModel):
     """Unified structured travel plan delivered directly to client (Zero regex required)."""
 
     destination_title: str = Field(..., description="Destination header")
+    origin: Optional[str] = Field(default=None, description="Departure origin if specified")
     duration_label: str = Field(..., description="Duration label, e.g. '7 Days'")
     estimated_budget: Optional[str] = Field(default=None, description="Total budget estimate")
     overview_summary: str = Field(..., description="Trip overview summary")

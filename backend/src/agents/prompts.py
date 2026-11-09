@@ -33,25 +33,26 @@ Instructions:
    - needs_weather: Set True ONLY if initial trip and weather is missing, or user asks about climate/packing.
    - needs_itinerary: Set True if initial trip, or user wants any change to activities, days, timing, or itinerary.
 
-3. Extract or preserve the primary destination (e.g. 'Tokyo & Kyoto, Japan'). Keep established destination unless user explicitly changes it.
-4. Extract primary_city as the single main municipality for weather lookups (e.g. 'Tokyo' if destination is 'Tokyo & Kyoto, Japan').
-5. Extract duration_days as an integer ONLY if explicitly specified or implied by the user (e.g. 'weekend' -> 3, '2 weeks' -> 14, '5 days' -> 5). If the user does not specify a duration, leave duration_days as null/None so the system can check web consensus for the ideal length.
-6. Provide a clear refinement_summary describing what the user wants adjusted.
+3. Extract or preserve the primary destination (e.g. 'Tokyo & Kyoto, Japan', 'Bangalore' from 'delhi to bangalore'). Keep established destination unless user explicitly changes it.
+4. Extract origin as the departure city if specified by the user (e.g. 'Delhi' from 'delhi to bangalore', 'Mumbai' from 'trip from Mumbai to Goa'). Leave null if no departure city was provided.
+5. Extract primary_city as the single main municipality for weather lookups (e.g. 'Tokyo' if destination is 'Tokyo & Kyoto, Japan', 'Bangalore' if destination is 'Bangalore').
+6. Extract duration_days as an integer ONLY if explicitly specified or implied by the user (e.g. 'weekend' -> 3, '2 weeks' -> 14, '5 days' -> 5). If the user does not specify a duration, leave duration_days as null/None so the system can check web consensus for the ideal length.
+7. Provide a clear refinement_summary describing what the user wants adjusted.
 """
 
-FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for travel to {destination}.
-Extract concrete, structured flight intelligence.
+FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for travel from {origin} to {destination}.
+Extract concrete, structured flight intelligence for this specific route.
 
 Search Context:
 {flight_data}
 
 Provide:
-1. duration: Realistic flight duration, e.g. '11-13 hours direct'
-2. fare_range: Estimated roundtrip coach/economy fare range quoted in Indian Rupees (₹ / INR), e.g. '₹65,000 - ₹95,000'
-3. airlines: Up to 4 major carriers operating routes to this destination
-4. airports: Departure/arrival hub codes or names (e.g. ['HND', 'NRT'])
-5. season_tips: Key booking advice or peak season warning
-6. summary: 2-sentence executive summary of the flight landscape
+1. duration: Realistic flight duration between these specific locations based on search context (e.g. '2h 45m direct' for domestic flights or actual duration found)
+2. fare_range: Estimated roundtrip coach/economy fare range quoted in Indian Rupees (₹ / INR) based on search context (e.g. '₹7,000 - ₹14,000' for domestic flights or actual route fares found)
+3. airlines: Up to 4 major carriers operating routes between {origin} and {destination}
+4. airports: Departure hub codes/names and arrival hub codes/names (e.g. ['DEL', 'BLR'])
+5. season_tips: Key booking advice or advance purchase recommendations
+6. summary: 2-sentence executive summary of the flight route from {origin} to {destination}
 """
 
 HOTEL_STRUCTURED_PROMPT = """Analyze the real-time accommodation search results for {destination}.
@@ -97,14 +98,16 @@ For each day:
 FINAL_STRUCTURED_PROMPT = """Create a clear travel summary and estimated budget for a trip to {destination}.
 
 Context:
+- Departure Origin: {origin}
+- Target Destination: {destination}
 - Flight Timing: {flight_results}
 - Hotels & Stays: {hotel_results}
 - Climate Outlook: {weather_results}
 - Itinerary Preview: {itinerary}
 
 Provide:
-1. trip_summary: 2 clear, helpful paragraphs covering the highlights, key activities, and best travel timing.
-2. estimated_budget: Total estimated budget range per traveler quoted in Indian Rupees (₹ / INR, e.g. '₹2,50,000 - ₹3,50,000 per traveler total'). All figures must strictly be in Indian Rupees (₹).
+1. trip_summary: 2 clear, helpful paragraphs covering arrival transit from {origin} to {destination}, daily highlights, and key activities. Never invent long-haul or international flights when the trip is domestic or between the specified cities.
+2. estimated_budget: Realistic total estimated budget range per traveler quoted in Indian Rupees (₹ / INR), dynamically matching the trip duration and combining airfare, hotel nights, meals, and local transport.
 3. recommendations: 3 to 4 practical travel tips for transport, reservations, and seasonal preparation.
 """
 

@@ -87,7 +87,7 @@ export const TripHeader: React.FC<TripHeaderProps> = ({
           </div>
 
           <h2 className="text-2xl sm:text-4xl font-extrabold tracking-tight text-white font-sans">
-            {plan.destinationTitle}
+            {plan.origin ? `${plan.origin} to ${plan.destinationTitle}` : plan.destinationTitle}
           </h2>
 
           <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">

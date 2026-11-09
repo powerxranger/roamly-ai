@@ -16,10 +16,12 @@ export function parseTripResponse(
   if (data.plan) {
     return {
       destinationTitle: data.plan.destination_title,
+      origin: data.plan.origin || data.plan.flights.origin,
       durationLabel: data.plan.duration_label,
       estimatedBudget: data.plan.estimated_budget,
       overviewSummary: data.plan.overview_summary,
       flights: {
+        origin: data.plan.flights.origin || data.plan.origin,
         duration: data.plan.flights.duration,
         fareRange: data.plan.flights.fare_range,
         airlines: data.plan.flights.airlines,

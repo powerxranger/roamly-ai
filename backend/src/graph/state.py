@@ -17,6 +17,7 @@ class TravelState(TypedDict, total=False):
 
     # Structured Pydantic state (Zero regex / string scraping)
     destination: str
+    origin: str
     intent: Optional[dict[str, Any]]
     flight_model: Optional[dict[str, Any]]
     hotel_model: Optional[list[dict[str, Any]]]
@@ -37,6 +38,7 @@ def initial_state(user_query: str) -> TravelState:
         "itinerary": "",
         "llm_calls": 0,
         "destination": "",
+        "origin": "",
         "intent": None,
         "flight_model": None,
         "hotel_model": None,

@@ -16,10 +16,12 @@ def final_agent(state: TravelState):
     time.sleep(1.5)
 
     destination = state.get("destination") or state.get("user_query", "")
+    origin = state.get("origin") or state.get("intent", {}).get("origin") or ""
 
     try:
         structured_llm = get_llm().with_structured_output(ExecutiveSynthesis)
         prompt = FINAL_STRUCTURED_PROMPT.format(
+            origin=origin or "Departure location",
             destination=destination,
             flight_results=truncate(state.get("flight_results", ""), 500),
             hotel_results=truncate(state.get("hotel_results", ""), 500),
@@ -46,6 +48,7 @@ def final_agent(state: TravelState):
     # Assemble the clean typed TripPlan model (Zero regex)
     structured_plan = assemble_trip_plan(
         destination=destination,
+        origin=origin or None,
         overview_summary=synthesis.trip_summary,
         estimated_budget=synthesis.estimated_budget,
         recommendations=synthesis.recommendations,

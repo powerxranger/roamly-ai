@@ -5,10 +5,12 @@ export interface TravelRequest {
 
 export interface TravelPlanPayload {
   destination_title: string;
+  origin?: string;
   duration_label: string;
   estimated_budget?: string;
   overview_summary: string;
   flights: {
+    origin?: string;
     duration?: string;
     fare_range?: string;
     airlines?: string[];
@@ -96,10 +98,11 @@ export interface AgentProgress {
   status: 'pending' | 'running' | 'completed' | 'failed';
 }
 
-export type ActiveTab = 'overview' | 'itinerary' | 'flights' | 'hotels' | 'weather' | 'dossier';
+export type ActiveTab = 'overview' | 'itinerary' | 'flights' | 'hotels' | 'weather' | 'full_plan';
 
 // Parsed UI Data Structures
 export interface ParsedFlightInfo {
+  origin?: string;
   airports?: string[];
   airlines?: string[];
   duration?: string;
@@ -138,6 +141,7 @@ export interface ParsedWeatherInfo {
 
 export interface ParsedTripPlan {
   destinationTitle: string;
+  origin?: string;
   durationLabel: string;
   estimatedBudget?: string;
   overviewSummary: string;

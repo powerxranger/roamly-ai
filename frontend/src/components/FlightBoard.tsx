@@ -25,7 +25,7 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
             </div>
             <div>
               <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
-                Curated Flight Intelligence
+                Flight Details
               </span>
               <h3 className="text-xl font-bold text-white tracking-tight">
                 Recommended Flight Path & Options
@@ -53,19 +53,21 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
               Origin
             </div>
             <div className="text-2xl font-black text-white tracking-tight mt-0.5">
-              Your Location
+              {flights.origin || 'Departure Hub'}
             </div>
             <div className="text-xs text-slate-400 mt-1">
-              Major International Hub
+              {flights.origin ? 'Departure Gateway' : 'Origin Location'}
             </div>
           </div>
 
           {/* Flight Path Graphic */}
           <div className="flex-1 flex flex-col items-center px-4 w-full md:w-auto">
-            <div className="flex items-center justify-center gap-2 text-xs font-medium text-slate-400 mb-2">
-              <Clock className="h-3.5 w-3.5 text-blue-400" />
-              <span>{flights.duration || 'Optimal Routing'}</span>
-            </div>
+            {flights.duration && (
+              <div className="flex items-center justify-center gap-2 text-xs font-medium text-slate-400 mb-2">
+                <Clock className="h-3.5 w-3.5 text-blue-400" />
+                <span>{flights.duration}</span>
+              </div>
+            )}
 
             <div className="w-full flex items-center gap-3">
               <div className="h-2 w-2 rounded-full bg-blue-500" />
@@ -74,10 +76,6 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
                 <Plane className="absolute left-1/2 -translate-x-1/2 h-4 w-4 text-blue-400 transform rotate-90" />
               </div>
               <div className="h-2 w-2 rounded-full bg-emerald-400" />
-            </div>
-
-            <div className="text-[11px] text-slate-500 mt-2 font-mono">
-              Direct / 1-Stop Connections
             </div>
           </div>
 
