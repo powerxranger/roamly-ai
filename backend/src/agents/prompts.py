@@ -107,3 +107,17 @@ Provide:
 2. estimated_budget: Total estimated budget range per traveler quoted in Indian Rupees (₹ / INR, e.g. '₹2,50,000 - ₹3,50,000 per traveler total'). All figures must strictly be in Indian Rupees (₹).
 3. recommendations: 3 to 4 practical travel tips for transport, reservations, and seasonal preparation.
 """
+
+WEATHER_STRUCTURED_PROMPT = """Analyze the real-time weather and forecast data for {destination}.
+Extract concrete climate details and practical, tailored packing recommendations.
+
+Meteorological Data:
+{weather_data}
+
+Provide:
+1. current_conditions: Clear summary of current atmospheric conditions (e.g. 'Clear sky, 45% humidity')
+2. temperature: Current or expected temperature range in Celsius (°C), e.g. '24°C' or '18°C - 26°C'
+3. forecast_summary: 1-2 sentence overview of the forecast over upcoming days
+4. packing_list: 4 to 6 practical, destination-appropriate packing items specifically chosen based on these weather conditions and destination characteristics
+"""
+
