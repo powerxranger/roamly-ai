@@ -41,24 +41,48 @@ Instructions:
 """
 
 FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for travel from {origin} to {destination}.
-Determine the transit route and nearest commercial airports.
-If {origin} or {destination} do not have commercial airports, identify the nearest serving airport for each location and the ground transfer connections (car, taxi, bus, or train) needed.
+Evaluate all viable transit mediums between these locations: flights, train/rail, and road/driving.
+
+Travel Evaluation Instructions:
+1. Distance and Route Feasibility:
+   - If {origin} and {destination} are close or regional (e.g. under 400-500 km or connected by high-speed rail or expressways, such as Delhi to Agra/Jaipur or Mumbai to Pune), assess if taking a train or driving is faster and more convenient than flying when airport security, check-in, and transfer times are factored in.
+   - For all domestic and land-connected routes, always extract concrete train and road options alongside flights so the traveler can compare mediums.
+   - For international routes across oceans, set train_option and road_option to null, and focus on flights.
+   - If either location lacks a commercial airport, identify the nearest commercial airport and detail any required ground transfers.
 
 Search Context:
 {flight_data}
 
 Provide:
-1. route_type: One of 'Direct Flight', 'Connecting Flight', or 'Multi-modal (Road/Rail + Flight)' depending on whether ground transfers to/from airports are required.
-2. departure_airport: Serving commercial departure airport (e.g. 'Indira Gandhi International Airport (DEL)', or nearest airport if {origin} has no commercial airport, such as 'Dehradun Jolly Grant Airport (DED)' for Rishikesh).
-3. arrival_airport: Serving commercial arrival airport (e.g. 'Kempegowda International Airport (BLR)', or nearest airport if {destination} has no commercial airport, such as 'Hubli Airport (HBX)' or 'Jindal Vijayanagar Airport (VDY)' for Hampi).
-4. origin_to_airport_transit: Ground travel guidance from {origin} to the departure airport if {origin} has no commercial airport (mode: taxi/train/bus, distance, and travel time). Leave null if {origin} has its own commercial airport.
-5. airport_to_destination_transit: Ground travel guidance from the arrival airport to {destination} if {destination} has no commercial airport (mode: taxi/train/bus, distance, and travel time). Leave null if {destination} has its own commercial airport.
-6. duration: Realistic flight duration between the airports based on search context (e.g. '2h 45m direct' or total transit time).
-7. fare_range: Estimated roundtrip economy airfare range quoted in Indian Rupees (₹ / INR) based on search context.
-8. airlines: Up to 4 major carriers operating routes between the airports.
-9. airports: Departure hub codes/names and arrival hub codes/names (e.g. ['DEL', 'BLR']).
-10. season_tips: Key booking advice or advance purchase recommendations.
-11. summary: 2 to 3 sentence practical summary of the journey route, explicitly highlighting any airport ground transfers.
+1. route_type: Concise route category (e.g. 'Short Regional Route', 'Domestic Direct Route', 'Connecting Flight Route', or 'Multi-modal Transit').
+2. primary_mode: The single recommended primary mode of transit ('Train', 'Road / Drive', 'Flight', or 'Multi-modal').
+3. mode_recommendation: 2 to 3 practical sentences explaining which mode is best and why, comparing total travel time (including airport buffer), convenience, and cost.
+4. duration: Typical flight duration if flying is viable (e.g. '2h 45m direct'), or null if flying is not recommended or impractical for this distance.
+5. fare_range: Estimated roundtrip economy airfare in Indian Rupees (₹ / INR).
+6. airlines: Up to 4 major carriers operating routes between the airports.
+7. airports: Departure and arrival airport codes/names (e.g. ['DEL', 'BLR']).
+8. departure_airport: Serving departure airport (nearest commercial hub if {origin} has no commercial airport).
+9. arrival_airport: Serving arrival airport (nearest commercial hub if {destination} has no commercial airport).
+10. origin_to_airport_transit: Ground travel guidance from {origin} to departure airport if {origin} lacks an airport (mode, distance, travel time). Leave null if origin has its own airport.
+11. airport_to_destination_transit: Ground travel guidance from arrival airport to {destination} if {destination} lacks an airport (mode, distance, travel time). Leave null if destination has its own airport.
+12. train_option: If train travel is viable, provide:
+    - mode: 'Train'
+    - duration: Typical train journey duration (e.g. '3h 45m')
+    - fare_range: Estimated ticket fare range in INR (e.g. '₹900 - ₹1,800')
+    - operators: Key train names (e.g. ['Vande Bharat Express', 'Shatabdi'])
+    - terminals: Departure and arrival railway stations (e.g. ['New Delhi (NDLS)', 'Jaipur (JP)'])
+    - details: Train frequency or booking guidance
+    Leave null if train travel is impossible or not viable.
+13. road_option: If road/driving travel is viable, provide:
+    - mode: 'Road / Drive'
+    - duration: Typical driving or bus duration (e.g. '4h 30m')
+    - fare_range: Estimated private cab fare or bus ticket in INR (e.g. '₹3,500 - ₹5,000 for cab')
+    - operators: Key highway/expressway names or bus services (e.g. ['NH 48', 'Delhi-Jaipur Expressway'])
+    - terminals: Origin and destination city hubs
+    - details: Driving distance in km and road conditions
+    Leave null if driving is impossible or not viable.
+14. season_tips: Practical booking advice or advance purchase recommendations.
+15. summary: 2 to 3 sentence executive transit summary comparing the best travel options.
 """
 
 HOTEL_STRUCTURED_PROMPT = """Analyze the real-time accommodation search results for {destination}.
@@ -113,8 +137,8 @@ Context:
 - Itinerary Preview: {itinerary}
 
 Provide:
-1. trip_summary: 2 clear, helpful paragraphs covering arrival transit from {origin} to {destination}, daily highlights, and key activities. If either city lacks a commercial airport, explain the door-to-door transit route clearly (ground travel to nearest airport, flight leg, and ground transfer to final destination). Never invent long-haul or international flights when the trip is domestic or between the specified cities.
-2. estimated_budget: Realistic total estimated budget range per traveler quoted in Indian Rupees (₹ / INR), dynamically matching the trip duration and combining airfare, airport road/rail transfers, hotel nights, meals, and local transport.
+1. trip_summary: 2 clear, helpful paragraphs covering arrival transit from {origin} to {destination}, daily highlights, and key activities. If train or driving is recommended (e.g. for close cities or regional routes), highlight that option clearly over flying. If either city lacks a commercial airport, explain the door-to-door transit route clearly (ground travel to nearest airport, flight leg, and ground transfer to final destination). Never invent long-haul or international flights when the trip is domestic or between the specified cities.
+2. estimated_budget: Realistic total estimated budget range per traveler quoted in Indian Rupees (₹ / INR), dynamically matching the trip duration and combining primary transit (airfare, train tickets, or road cab/fuel based on recommended mode), hotel nights, meals, and local transport.
 3. recommendations: 3 to 4 practical travel tips for transport, reservations, and seasonal preparation.
 """
 

@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import {
   Sparkles,
   Calendar,
-  Plane,
   Hotel,
   CloudSun,
   FileText,
-  ArrowRight
+  ArrowRight,
+  Route
 } from 'lucide-react';
 import { ActiveTab, TravelSuccessResponse } from '../types';
 import { parseTripResponse } from '../utils/parser';
@@ -43,8 +43,8 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
     },
     {
       id: 'flights',
-      label: 'Flights',
-      icon: <Plane className="h-4 w-4" />,
+      label: 'Transit & Flights',
+      icon: <Route className="h-4 w-4" />,
     },
     {
       id: 'hotels',
@@ -129,7 +129,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                 </div>
               </div>
 
-              {/* Flights Preview */}
+              {/* Transit & Flights Preview */}
               <div
                 onClick={() => setActiveTab('flights')}
                 className="cursor-pointer group p-5 rounded-3xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all duration-200 flex flex-col justify-between"
@@ -137,22 +137,26 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                 <div>
                   <div className="flex items-center justify-between text-xs text-blue-400 font-bold uppercase tracking-wider mb-2">
                     <span className="flex items-center gap-1.5">
-                      <Plane className="h-3.5 w-3.5" />
-                      <span>Flights</span>
+                      <Route className="h-3.5 w-3.5" />
+                      <span>{parsedPlan.flights.primaryMode ? `Transit (${parsedPlan.flights.primaryMode})` : 'Transit & Flights'}</span>
                     </span>
-                    {parsedPlan.flights.fareRange && (
-                      <span className="text-emerald-400 font-semibold">{parsedPlan.flights.fareRange}</span>
+                    {(parsedPlan.flights.fareRange || parsedPlan.flights.trainOption?.fareRange) && (
+                      <span className="text-emerald-400 font-semibold">
+                        {parsedPlan.flights.fareRange || parsedPlan.flights.trainOption?.fareRange}
+                      </span>
                     )}
                   </div>
                   <h4 className="text-base font-bold text-white group-hover:text-blue-300 transition-colors">
-                    {parsedPlan.flights.duration || 'Flight Information'}
+                    {parsedPlan.flights.modeRecommendation
+                      ? (parsedPlan.flights.primaryMode ? `Recommended: ${parsedPlan.flights.primaryMode}` : parsedPlan.flights.duration || 'Transit Route')
+                      : parsedPlan.flights.duration || 'Transit Information'}
                   </h4>
                   <p className="text-xs text-slate-400 mt-1 line-clamp-3 leading-relaxed">
-                    {parsedPlan.flights.airlines?.join(', ') || parsedPlan.flights.seasonTips || ''}
+                    {parsedPlan.flights.modeRecommendation || parsedPlan.flights.airlines?.join(', ') || parsedPlan.flights.seasonTips || ''}
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-blue-400 font-semibold group-hover:translate-x-0.5 transition-transform">
-                  <span>View Flight Details</span>
+                  <span>View Transit Details</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </div>

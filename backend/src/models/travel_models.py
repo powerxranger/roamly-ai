@@ -57,14 +57,33 @@ class TravelIntent(BaseModel):
     )
 
 
+class TransitOption(BaseModel):
+    """Details for an alternative travel medium like train, car, or road bus."""
+
+    mode: str = Field(..., description="Transport mode: e.g. 'Train', 'Road / Drive', 'Flight', 'Bus'")
+    duration: Optional[str] = Field(default=None, description="Travel duration, e.g. '3h 45m'")
+    fare_range: Optional[str] = Field(default=None, description="Estimated fare in INR, e.g. '₹900 - ₹1,800'")
+    operators: list[str] = Field(default_factory=list, description="Key train names, bus operators, or highway names (e.g. ['Vande Bharat Express', 'Shatabdi'])")
+    terminals: list[str] = Field(default_factory=list, description="Departure and arrival stations or hubs (e.g. ['New Delhi (NDLS)', 'Jaipur (JP)'])")
+    details: Optional[str] = Field(default=None, description="Practical travel guidance, distance, or route tips")
+
+
 class FlightInfo(BaseModel):
-    """Structured flight and route transit intelligence emitted directly by Flight Agent."""
+    """Structured transit intelligence (flights, trains, and road/driving) emitted directly by Flight/Transit Agent."""
 
     origin: Optional[str] = Field(default=None, description="Departure location or hub city/town")
     destination: Optional[str] = Field(default=None, description="Arrival destination city/town")
     route_type: Optional[str] = Field(
         default=None,
-        description="Type of route, e.g. 'Direct Flight', 'Connecting Flight', or 'Multi-modal (Road/Rail + Flight)'",
+        description="Type of route, e.g. 'Short Regional Route', 'Domestic Direct', 'Connecting Flight', or 'Multi-modal'",
+    )
+    primary_mode: Optional[str] = Field(
+        default=None,
+        description="Recommended primary mode of transit: 'Train', 'Road / Drive', 'Flight', or 'Multi-modal'",
+    )
+    mode_recommendation: Optional[str] = Field(
+        default=None,
+        description="Clear rationale explaining why the recommended mode is best for this specific route distance and convenience",
     )
     departure_airport: Optional[str] = Field(
         default=None,
@@ -82,10 +101,18 @@ class FlightInfo(BaseModel):
         default=None,
         description="Ground transit from arrival airport to destination city if destination city has no airport (e.g. 'Cab or train from Hubli/Jindal Airport to Hampi (~40-140 km, 1-3 hrs)')",
     )
-    duration: Optional[str] = Field(default=None, description="Typical flight duration, e.g. '2h 45m direct' or total transit time")
+    duration: Optional[str] = Field(default=None, description="Typical flight duration, e.g. '2h 45m direct', or null if flying is not recommended")
     fare_range: Optional[str] = Field(default=None, description="Estimated airfare range in INR, e.g. '₹7,000 - ₹14,000'")
     airlines: list[str] = Field(default_factory=list, description="Top airlines operating route")
     airports: list[str] = Field(default_factory=list, description="Primary airport codes/names")
+    train_option: Optional[TransitOption] = Field(
+        default=None,
+        description="Train / Rail alternative if viable (duration, train names like Vande Bharat/Rajdhani, fare, stations)",
+    )
+    road_option: Optional[TransitOption] = Field(
+        default=None,
+        description="Road / Drive / Bus alternative if viable (duration, highway route, cab/bus fare estimate, distance)",
+    )
     season_tips: Optional[str] = Field(default=None, description="Booking tips and seasonal advice")
     summary: str = Field(default="", description="Executive route and transit summary")
 

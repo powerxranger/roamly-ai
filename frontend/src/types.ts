@@ -3,6 +3,15 @@ export interface TravelRequest {
   thread_id?: string | null;
 }
 
+export interface TransitOptionPayload {
+  mode: string;
+  duration?: string;
+  fare_range?: string;
+  operators?: string[];
+  terminals?: string[];
+  details?: string;
+}
+
 export interface TravelPlanPayload {
   destination_title: string;
   origin?: string;
@@ -13,6 +22,8 @@ export interface TravelPlanPayload {
     origin?: string;
     destination?: string;
     route_type?: string;
+    primary_mode?: string;
+    mode_recommendation?: string;
     departure_airport?: string;
     arrival_airport?: string;
     origin_to_airport_transit?: string;
@@ -21,6 +32,8 @@ export interface TravelPlanPayload {
     fare_range?: string;
     airlines?: string[];
     airports?: string[];
+    train_option?: TransitOptionPayload;
+    road_option?: TransitOptionPayload;
     season_tips?: string;
     raw_text: string;
   };
@@ -106,11 +119,22 @@ export interface AgentProgress {
 
 export type ActiveTab = 'overview' | 'itinerary' | 'flights' | 'hotels' | 'weather' | 'full_plan';
 
+export interface ParsedTransitOption {
+  mode: string;
+  duration?: string;
+  fareRange?: string;
+  operators?: string[];
+  terminals?: string[];
+  details?: string;
+}
+
 // Parsed UI Data Structures
 export interface ParsedFlightInfo {
   origin?: string;
   destination?: string;
   routeType?: string;
+  primaryMode?: string;
+  modeRecommendation?: string;
   departureAirport?: string;
   arrivalAirport?: string;
   originToAirportTransit?: string;
@@ -119,6 +143,8 @@ export interface ParsedFlightInfo {
   airlines?: string[];
   duration?: string;
   fareRange?: string;
+  trainOption?: ParsedTransitOption;
+  roadOption?: ParsedTransitOption;
   seasonTips?: string;
   rawText: string;
 }

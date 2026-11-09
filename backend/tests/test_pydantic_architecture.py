@@ -137,6 +137,55 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(flights["arrival_airport"], "Hubli Airport (HBX)")
         self.assertEqual(flights["airport_to_destination_transit"], "Cab or train from Hubli to Hampi (~140 km, 3 hours)")
 
+    def test_regional_transit_train_and_road_comparison(self):
+        flight_data = {
+            "origin": "Delhi",
+            "destination": "Jaipur",
+            "route_type": "Short Regional Route",
+            "primary_mode": "Train",
+            "mode_recommendation": "Vande Bharat Express is recommended over flights for this 270 km trip because center-to-center travel takes under 4 hours without airport security delays.",
+            "duration": None,
+            "fare_range": None,
+            "airlines": [],
+            "airports": [],
+            "train_option": {
+                "mode": "Train",
+                "duration": "3h 45m",
+                "fare_range": "₹900 - ₹1,800",
+                "operators": ["Vande Bharat Express", "Shatabdi Express"],
+                "terminals": ["New Delhi (NDLS)", "Jaipur (JP)"],
+                "details": "Multiple daily express trains departing central New Delhi.",
+            },
+            "road_option": {
+                "mode": "Road / Drive",
+                "duration": "4h 30m",
+                "fare_range": "₹3,500 - ₹5,000 for cab",
+                "operators": ["NH 48", "Delhi-Jaipur Expressway"],
+                "terminals": ["Delhi", "Jaipur"],
+                "details": "270 km highway drive via the express corridor.",
+            },
+            "season_tips": "Book morning train seats 1-2 weeks in advance.",
+            "summary": "Train is the most efficient choice between Delhi and Jaipur.",
+        }
+
+        plan_dict = assemble_trip_plan(
+            destination="Jaipur",
+            origin="Delhi",
+            overview_summary="Regional trip from Delhi to Jaipur.",
+            estimated_budget="₹15,000 - ₹25,000",
+            recommendations=["Take the morning Vande Bharat train"],
+            flight_data=flight_data,
+        )
+
+        flights = plan_dict["flights"]
+        self.assertEqual(flights["primary_mode"], "Train")
+        self.assertIn("Vande Bharat", flights["mode_recommendation"])
+        self.assertIsNotNone(flights["train_option"])
+        self.assertEqual(flights["train_option"]["duration"], "3h 45m")
+        self.assertEqual(flights["train_option"]["fare_range"], "₹900 - ₹1,800")
+        self.assertIsNotNone(flights["road_option"])
+        self.assertEqual(flights["road_option"]["duration"], "4h 30m")
+
 
 if __name__ == "__main__":
     unittest.main()
