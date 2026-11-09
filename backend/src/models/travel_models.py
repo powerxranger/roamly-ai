@@ -27,9 +27,9 @@ class TravelIntent(BaseModel):
         default="",
         description="The primary single city or municipality for weather forecast querying (e.g. 'Tokyo', 'Rome', 'Paris').",
     )
-    duration_days: int = Field(
-        default=7,
-        description="Estimated duration of the trip in days.",
+    duration_days: Optional[int] = Field(
+        default=None,
+        description="Explicit duration in days if specified or implied by the user (e.g. 3 for 'weekend', 10 for '10 days'). None if unspecified by the user.",
     )
     needs_flights: bool = Field(
         default=False,
@@ -97,6 +97,8 @@ class ItineraryDayPlan(BaseModel):
 class ItineraryPlan(BaseModel):
     """Wrapper for Itinerary Agent structured output."""
 
+    duration_days: int = Field(default=5, description="Total days in the itinerary")
+    duration_rationale: Optional[str] = Field(default=None, description="Concierge rationale for why this duration was selected")
     days: list[ItineraryDayPlan] = Field(default_factory=list, description="Ordered daily schedule")
 
 

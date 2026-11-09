@@ -28,7 +28,7 @@ def assemble_trip_plan(
     itinerary_days = [ItineraryDayPlan(**d) for d in (itinerary_data or [])]
     weather = WeatherPlan(**(weather_data or {}))
 
-    days_count = len(itinerary_days) or duration_days or 7
+    days_count = len(itinerary_days) or duration_days or 5
     duration_label = f"{days_count} Days"
 
     plan = TripPlan(

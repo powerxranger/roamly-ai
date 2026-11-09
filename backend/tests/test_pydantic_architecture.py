@@ -35,6 +35,18 @@ def test_travel_intent_validation():
     assert intent.needs_itinerary is True
 
 
+def test_travel_intent_unspecified_duration():
+    data = {
+        "intent_type": "initial_planning",
+        "destination": "Amsterdam",
+        "primary_city": "Amsterdam",
+        "needs_itinerary": True,
+    }
+    intent = TravelIntent(**data)
+    assert intent.duration_days is None
+    assert intent.destination == "Amsterdam"
+
+
 def test_assemble_trip_plan_zero_regex():
     flight_data = {
         "duration": "12 hours",

@@ -39,7 +39,7 @@ def router_agent(state: TravelState) -> dict:
         intent = TravelIntent(
             intent_type="initial_planning" if is_initial else "refine_itinerary",
             destination=existing_dest or "Custom Journey",
-            duration_days=7,
+            duration_days=None,
             needs_flights=is_initial,
             needs_hotels=is_initial,
             needs_weather=is_initial,

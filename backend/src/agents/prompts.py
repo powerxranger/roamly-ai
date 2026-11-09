@@ -28,7 +28,8 @@ Instructions:
 
 3. Extract or preserve the primary destination (e.g. 'Tokyo & Kyoto, Japan'). Keep established destination unless user explicitly changes it.
 4. Extract primary_city as the single main municipality for weather lookups (e.g. 'Tokyo' if destination is 'Tokyo & Kyoto, Japan').
-5. Provide a clear refinement_summary describing what the user wants adjusted.
+5. Extract duration_days as an integer ONLY if explicitly specified or implied by the user (e.g. 'weekend' -> 3, '2 weeks' -> 14, '5 days' -> 5). If the user does not specify a duration, leave duration_days as null/None so the concierge can scout web consensus for the ideal length.
+6. Provide a clear refinement_summary describing what the user wants adjusted.
 """
 
 FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for travel to {destination}.
@@ -61,7 +62,9 @@ Return a list of 3 hotels with accurate name, tier, estimated nightly price_rang
 ITINERARY_STRUCTURED_PROMPT = """Create or refine a structured day-by-day travel itinerary for {destination}.
 
 Trip Parameters:
-- Planned Duration: {duration_days} Days
+- User-Specified Duration: {requested_duration}
+- Web Search Consensus on Recommended Trip Length:
+{duration_context}
 - Transit Context: {flight_results}
 - Accommodation Context: {hotel_results}
 - Climate Forecast: {weather_results}
@@ -70,7 +73,11 @@ Refinement Context (if modifying existing schedule):
 {refinement_context}
 
 Instructions:
-Emit an ordered list of days (Day 1 through Day {duration_days}).
+1. Determine duration_days:
+   - If User-Specified Duration is provided, use that exact count.
+   - Otherwise, adopt the travel consensus from the Web Search (typically between 3 and 10 days to ensure full coverage without filler).
+2. Set duration_rationale explaining why this timeframe is optimal for {destination}.
+3. Emit an ordered list of days (Day 1 through Day {duration_days}).
 For each day:
 - day_number: integer (1, 2, 3...)
 - title: concise descriptive day theme
