@@ -18,43 +18,43 @@ import { UserQueryCard } from './components/UserQueryCard';
 import { ConciergeTask, TravelSuccessResponse } from './types';
 import { checkHealth, planTravel, ApiError } from './api';
 
-const INITIAL_CONCIERGE_TASKS: ConciergeTask[] = [
+const INITIAL_PLANNING_TASKS: ConciergeTask[] = [
   {
     id: 'flight_scout',
-    label: 'Flight Scout',
-    sublabel: 'Scanning direct routes, airport hubs & live airfares',
+    label: 'Flights',
+    sublabel: 'Searching routes, airports, and airfares',
     icon: 'flight',
     status: 'pending',
     technicalRole: 'Remote Tavily MCP',
   },
   {
     id: 'stays_curator',
-    label: 'Stays Curator',
-    sublabel: 'Evaluating luxury sanctuaries, boutique villas & rates',
+    label: 'Hotels & Stays',
+    sublabel: 'Finding hotels, boutique stays, and nightly rates',
     icon: 'hotel',
     status: 'pending',
     technicalRole: 'Remote Tavily MCP',
   },
   {
     id: 'climate_intel',
-    label: 'Climate Intelligence',
-    sublabel: 'Gathering meteorological forecasts & packing essentials',
+    label: 'Weather & Packing',
+    sublabel: 'Checking weather forecast and packing essentials',
     icon: 'weather',
     status: 'pending',
     technicalRole: 'Local Stdio FastMCP',
   },
   {
     id: 'journey_architect',
-    label: 'Journey Architect',
-    sublabel: 'Harmonizing travel timings, stays & daily experiences',
+    label: 'Itinerary Planner',
+    sublabel: 'Building day-by-day schedules and activities',
     icon: 'itinerary',
     status: 'pending',
     technicalRole: 'LangGraph Barrier Fan-In',
   },
   {
-    id: 'master_concierge',
-    label: 'Master Concierge',
-    sublabel: 'Synthesizing complete bespoke travel dossier & budget',
+    id: 'trip_summary',
+    label: 'Trip Summary',
+    sublabel: 'Organizing your travel plan and estimated budget',
     icon: 'synthesis',
     status: 'pending',
     technicalRole: 'Overview & State Reducer',
@@ -68,7 +68,7 @@ export const App: React.FC = () => {
   const [refinements, setRefinements] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
-  const [tasks, setTasks] = useState<ConciergeTask[]>(INITIAL_CONCIERGE_TASKS);
+  const [tasks, setTasks] = useState<ConciergeTask[]>(INITIAL_PLANNING_TASKS);
   const [results, setResults] = useState<TravelSuccessResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -113,7 +113,7 @@ export const App: React.FC = () => {
     setActiveQuery('');
     setRefinements([]);
     setThreadId(null);
-    setTasks(INITIAL_CONCIERGE_TASKS);
+    setTasks(INITIAL_PLANNING_TASKS);
   };
 
   const handlePlanTrip = async (customQuery?: string) => {
@@ -137,22 +137,22 @@ export const App: React.FC = () => {
     // Phase 1: Parallel scout tasks are activated concurrently
     setTasks([
       {
-        ...INITIAL_CONCIERGE_TASKS[0],
+        ...INITIAL_PLANNING_TASKS[0],
         status: 'in_progress',
-        sublabel: isRefining ? 'Evaluating flight adjustments...' : INITIAL_CONCIERGE_TASKS[0].sublabel
+        sublabel: isRefining ? 'Evaluating flight adjustments...' : INITIAL_PLANNING_TASKS[0].sublabel
       },
       {
-        ...INITIAL_CONCIERGE_TASKS[1],
+        ...INITIAL_PLANNING_TASKS[1],
         status: 'in_progress',
-        sublabel: isRefining ? 'Checking accommodations alignment...' : INITIAL_CONCIERGE_TASKS[1].sublabel
+        sublabel: isRefining ? 'Checking accommodations alignment...' : INITIAL_PLANNING_TASKS[1].sublabel
       },
       {
-        ...INITIAL_CONCIERGE_TASKS[2],
+        ...INITIAL_PLANNING_TASKS[2],
         status: 'in_progress',
-        sublabel: isRefining ? 'Verifying regional climate...' : INITIAL_CONCIERGE_TASKS[2].sublabel
+        sublabel: isRefining ? 'Verifying regional climate...' : INITIAL_PLANNING_TASKS[2].sublabel
       },
-      { ...INITIAL_CONCIERGE_TASKS[3], status: 'pending' },
-      { ...INITIAL_CONCIERGE_TASKS[4], status: 'pending' },
+      { ...INITIAL_PLANNING_TASKS[3], status: 'pending' },
+      { ...INITIAL_PLANNING_TASKS[4], status: 'pending' },
     ]);
 
     // Timed realistic visual transitions reflecting the LangGraph fan-out / barrier fan-in
@@ -164,7 +164,7 @@ export const App: React.FC = () => {
           ? {
               ...t,
               status: 'in_progress',
-              sublabel: isRefining ? 'Re-architecting day schedule with adjustments...' : t.sublabel
+              sublabel: isRefining ? 'Updating day schedule with adjustments...' : t.sublabel
             }
           : t
       ));
@@ -174,11 +174,11 @@ export const App: React.FC = () => {
       setTasks(prev => prev.map(t =>
         t.id === 'journey_architect'
           ? { ...t, status: 'completed' }
-          : t.id === 'master_concierge'
+          : t.id === 'trip_summary'
           ? {
               ...t,
               status: 'in_progress',
-              sublabel: isRefining ? 'Synthesizing updated dossier...' : t.sublabel
+              sublabel: isRefining ? 'Finalizing updated trip plan...' : t.sublabel
             }
           : t
       ));
@@ -207,7 +207,7 @@ export const App: React.FC = () => {
       clearTimeout(stageTimer1);
       clearTimeout(stageTimer2);
 
-      let message = 'An unexpected error occurred while curating your travel plan.';
+      let message = 'An unexpected error occurred while creating your travel plan.';
       if (err instanceof ApiError) {
         message = err.message;
       } else if (err instanceof Error) {
@@ -267,7 +267,7 @@ export const App: React.FC = () => {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400">
                 <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                <span>Autonomous Luxury Concierge</span>
+                <span>AI Travel Planner</span>
               </div>
 
               <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
@@ -278,11 +278,11 @@ export const App: React.FC = () => {
               </h1>
 
               <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
-                Describe your dream escape in plain English. Autonomous concierges scout real-time flights, handpick boutique sanctuaries, and craft your bespoke journey.
+                Describe where you want to go in plain English. We search real-time flights, hotels, weather, and create your complete travel plan.
               </p>
             </div>
 
-            {/* Centered Luxury Input Box */}
+            {/* Centered Input Box */}
             <div className="w-full">
               <form
                 onSubmit={(e) => { e.preventDefault(); handlePlanTrip(); }}
@@ -303,7 +303,7 @@ export const App: React.FC = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 mt-2">
                   <div className="flex items-center gap-2 text-xs text-slate-500 hidden sm:flex">
                     <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Press <kbd className="px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-400">Enter</kbd> to curate</span>
+                    <span>Press <kbd className="px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-400">Enter</kbd> to plan</span>
                   </div>
 
                   <button
@@ -314,12 +314,12 @@ export const App: React.FC = () => {
                     {isProcessing ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Curating Blueprint...</span>
+                        <span>Planning Trip...</span>
                       </>
                     ) : (
                       <>
                         <Send className="h-4 w-4" />
-                        <span>Plan Journey</span>
+                        <span>Plan Trip</span>
                       </>
                     )}
                   </button>
@@ -429,7 +429,7 @@ export const App: React.FC = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isProcessing}
-              placeholder={isProcessing ? "Concierges scouting live travel streams..." : "Ask a refinement... e.g. 'Add a day trip to Hakone on Day 4' or 'Switch to boutique stays under $200'"}
+              placeholder={isProcessing ? "Searching live travel information..." : "Ask an update... e.g. 'Add a day trip to Hakone on Day 4' or 'Switch to boutique stays under ₹15,000'"}
               className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none"
             />
 

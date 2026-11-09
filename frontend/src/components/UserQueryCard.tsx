@@ -26,7 +26,7 @@ export const UserQueryCard: React.FC<UserQueryCardProps> = ({
               Your Travel Request
             </span>
             <span className="text-[11px] text-slate-400 block">
-              Autonomous Concierge Session
+              Active Planning Session
             </span>
           </div>
         </div>
@@ -39,7 +39,7 @@ export const UserQueryCard: React.FC<UserQueryCardProps> = ({
           )}
           <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
             <CheckCircle2 className="h-3 w-3 text-emerald-400" />
-            <span>Curated</span>
+            <span>Ready</span>
           </span>
         </div>
       </div>

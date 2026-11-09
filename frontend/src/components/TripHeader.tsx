@@ -33,7 +33,7 @@ export const TripHeader: React.FC<TripHeaderProps> = ({
       `## Flights\n${rawResponse.flight_results}\n\n` +
       `## Accommodations\n${rawResponse.hotel_results}\n\n` +
       `## Weather & Advice\n${rawResponse.weather_results}\n\n` +
-      `---\nCurated by Roamly AI`;
+      `---\nCreated by Roamly AI`;
 
     try {
       await navigator.clipboard.writeText(fullText);
@@ -53,7 +53,7 @@ export const TripHeader: React.FC<TripHeaderProps> = ({
       `## Flights\n${rawResponse.flight_results}\n\n` +
       `## Accommodations\n${rawResponse.hotel_results}\n\n` +
       `## Weather & Advice\n${rawResponse.weather_results}\n\n` +
-      `---\nCurated by Roamly AI`;
+      `---\nCreated by Roamly AI`;
 
     const blob = new Blob([fullText], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -78,7 +78,7 @@ export const TripHeader: React.FC<TripHeaderProps> = ({
           <div className="flex flex-wrap items-center gap-2">
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400">
               <Sparkles className="h-3.5 w-3.5" />
-              <span>Curated Travel Blueprint</span>
+              <span>Travel Plan</span>
             </span>
             <span className="text-xs text-slate-500">•</span>
             <span className="text-xs text-slate-400 font-mono">
@@ -142,7 +142,7 @@ export const TripHeader: React.FC<TripHeaderProps> = ({
             ) : (
               <>
                 <Copy className="h-3.5 w-3.5 text-slate-400" />
-                <span>Copy Dossier</span>
+                <span>Copy Plan</span>
               </>
             )}
           </button>

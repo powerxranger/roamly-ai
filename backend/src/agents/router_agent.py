@@ -37,7 +37,7 @@ def router_agent(state: TravelState) -> dict:
         raise RuntimeError(f"RouterAgent failed to classify travel intent: {e}") from e
 
     intent_dict = intent.model_dump()
-    final_destination = intent.destination or existing_dest or "Custom Journey"
+    final_destination = intent.destination or existing_dest or "Custom Trip"
 
     return {
         "intent": intent_dict,

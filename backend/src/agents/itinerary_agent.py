@@ -61,7 +61,7 @@ def itinerary_agent(state: TravelState):
         )
 
         result: ItineraryPlan = structured_llm.invoke([
-            SystemMessage(content="You are an elite travel architect. Determine optimal trip length from travel consensus and emit structured day plans."),
+            SystemMessage(content="You are an expert travel planner. Determine the recommended trip length from travel consensus and emit structured day plans."),
             HumanMessage(content=prompt),
         ])
 
@@ -85,9 +85,9 @@ def itinerary_agent(state: TravelState):
 
     formatted_text = header_text + "\n\n".join([
         f"### Day {d.day_number}: {d.title}\n"
-        f"- Morning: {d.morning or 'Morning exploration'}\n"
-        f"- Afternoon: {d.afternoon or 'Afternoon cultural discovery'}\n"
-        f"- Evening: {d.evening or 'Evening dining and relaxation'}\n" +
+        f"- Morning: {d.morning or 'Morning sightseeing'}\n"
+        f"- Afternoon: {d.afternoon or 'Afternoon activities and local sights'}\n"
+        f"- Evening: {d.evening or 'Evening dinner and free time'}\n" +
         "\n".join(f"- Highlight: {h}" for h in d.highlights)
         for d in days
     ])

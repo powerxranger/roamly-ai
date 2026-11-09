@@ -32,7 +32,7 @@ def hotel_agent(state: TravelState):
         )
 
         result: HotelList = structured_llm.invoke([
-            SystemMessage(content="You are a luxury hospitality curator. Emit strictly structured accommodation models with all nightly rates quoted in Indian Rupees (₹ / INR)."),
+            SystemMessage(content="You are an expert travel assistant. Emit structured hotel options with all nightly rates quoted in Indian Rupees (₹ / INR)."),
             HumanMessage(content=prompt),
         ])
 

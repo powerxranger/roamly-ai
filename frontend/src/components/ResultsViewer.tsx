@@ -58,7 +58,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
     },
     {
       id: 'dossier',
-      label: 'Full Dossier',
+      label: 'Full Plan',
       icon: <FileText className="h-4 w-4" />,
     },
   ];
@@ -148,11 +148,11 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                     {parsedPlan.flights.duration || 'Optimal Flight Routes'}
                   </h4>
                   <p className="text-xs text-slate-400 mt-1 line-clamp-3 leading-relaxed">
-                    {parsedPlan.flights.airlines?.join(', ') || parsedPlan.flights.seasonTips || 'Scouted route intelligence.'}
+                    {parsedPlan.flights.airlines?.join(', ') || parsedPlan.flights.seasonTips || 'Available flight routes.'}
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-blue-400 font-semibold group-hover:translate-x-0.5 transition-transform">
-                  <span>View Boarding Pass</span>
+                  <span>View Flight Details</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </div>
@@ -168,13 +168,13 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                       <Hotel className="h-3.5 w-3.5" />
                       <span>Stays</span>
                     </span>
-                    <span className="text-slate-500 font-normal">{parsedPlan.hotels.length} Curated</span>
+                    <span className="text-slate-500 font-normal">{parsedPlan.hotels.length} Options</span>
                   </div>
                   <h4 className="text-base font-bold text-white group-hover:text-purple-300 transition-colors">
-                    {parsedPlan.hotels[0]?.name || 'Luxury & Boutique Stays'}
+                    {parsedPlan.hotels[0]?.name || 'Recommended Stays'}
                   </h4>
                   <p className="text-xs text-slate-400 mt-1 line-clamp-3 leading-relaxed">
-                    {parsedPlan.hotels[0]?.location || parsedPlan.hotels[0]?.description.slice(0, 120) || 'Handpicked sanctuaries.'}
+                    {parsedPlan.hotels[0]?.location || parsedPlan.hotels[0]?.description.slice(0, 120) || 'Selected hotels.'}
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-purple-400 font-semibold group-hover:translate-x-0.5 transition-transform">
@@ -190,7 +190,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
               <div className="p-6 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-xl space-y-4">
                 <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-400">
                   <Sparkles className="h-4 w-4" />
-                  <span>Concierge Insider Recommendations</span>
+                  <span>Helpful Travel Tips</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {parsedPlan.recommendations.map((rec, i) => (
@@ -240,7 +240,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
           <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 sm:p-8 shadow-2xl">
             <div className="pb-4 mb-4 border-b border-slate-800 flex items-center justify-between">
               <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Complete Synthesized Markdown Dossier
+                Full Travel Plan (Markdown)
               </span>
               <button
                 type="button"

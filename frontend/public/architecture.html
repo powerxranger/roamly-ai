@@ -902,7 +902,7 @@ response = get_llm().invoke([SystemMessage(...), HumanMessage(content=prompt)])`
     tagColor: "var(--emerald)",
     tagBg: "var(--emerald-dim)",
     title: "Final Consolidation Agent",
-    desc: "Formats everything into a clean, executive travel dossier. Produces the final markdown response containing cost estimates, packing tips according to weather, flight/hotel cards, and full itinerary.",
+    desc: "Formats everything into a clean, complete travel plan. Produces the final markdown response containing cost estimates, packing tips according to weather, flight/hotel cards, and full itinerary.",
     pills: ["src/agents/final_agent.py", "Groq LLM", "Final Answer", "Markdown Output"],
     code: `prompt = FINAL_AGENT_PROMPT.format(...)
 response = get_llm().invoke([

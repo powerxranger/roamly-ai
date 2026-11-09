@@ -63,7 +63,7 @@ def test_assemble_trip_plan_zero_regex():
             "price_range": "₹65,000/night",
             "location": "Kamigyo Ward",
             "amenities": ["Spa", "Michelin Dining"],
-            "description": "Luxury riverside sanctuary.",
+            "description": "Riverside hotel.",
         }
     ]
     itinerary_data = [
@@ -85,7 +85,7 @@ def test_assemble_trip_plan_zero_regex():
 
     plan_dict = assemble_trip_plan(
         destination="Kyoto, Japan",
-        overview_summary="Bespoke luxury journey across ancient Kyoto.",
+        overview_summary="Complete travel plan for Kyoto.",
         estimated_budget="₹3,20,000 - ₹4,50,000",
         recommendations=["Book temple passes early"],
         flight_data=flight_data,

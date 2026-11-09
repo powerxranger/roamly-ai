@@ -48,13 +48,13 @@ export const ConciergeRadar: React.FC<ConciergeRadarProps> = ({
               <span className={`relative inline-flex rounded-full h-2.5 w-2.5 ${isProcessing ? 'bg-blue-500' : 'bg-emerald-500'}`} />
             </span>
             <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
-              {isProcessing ? 'Curating Your Bespoke Travel Blueprint' : 'Travel Blueprint Assembled'}
+              {isProcessing ? 'Planning Your Trip' : 'Trip Plan Ready'}
             </h3>
           </div>
           <p className="text-xs text-slate-400 mt-1">
             {isProcessing
-              ? 'Our autonomous travel concierges are scouting live flights, stays, climate, and daily activities concurrently.'
-              : 'All travel streams successfully gathered and synthesized into your itinerary.'}
+              ? 'Searching live flights, hotels, weather, and daily activities.'
+              : 'All travel details gathered and organized into your plan.'}
           </p>
         </div>
 

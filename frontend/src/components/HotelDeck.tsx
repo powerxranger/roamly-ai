@@ -16,14 +16,14 @@ export const HotelDeck: React.FC<HotelDeckProps> = ({ hotels, rawText }) => {
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-xs font-semibold text-amber-300">
             <Star className="h-3 w-3 fill-amber-400 text-amber-400" />
-            <span>Luxury Sanctuary</span>
+            <span>Luxury</span>
           </span>
         );
       case 'Boutique':
         return (
           <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-xs font-semibold text-purple-300">
             <Sparkles className="h-3 w-3 text-purple-400" />
-            <span>Curated Boutique</span>
+            <span>Boutique</span>
           </span>
         );
       case 'Value':
@@ -49,10 +49,10 @@ export const HotelDeck: React.FC<HotelDeckProps> = ({ hotels, rawText }) => {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <span className="text-[11px] font-bold uppercase tracking-wider text-blue-400">
-            Handpicked Stays & Retreats
+            Places to Stay
           </span>
           <h3 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            Curated Accommodations
+            Hotel Options
           </h3>
         </div>
 
@@ -61,7 +61,7 @@ export const HotelDeck: React.FC<HotelDeckProps> = ({ hotels, rawText }) => {
           onClick={() => setShowRaw(!showRaw)}
           className="flex items-center gap-1 text-xs text-slate-400 hover:text-white transition px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-800"
         >
-          <span>{showRaw ? 'Hide Raw Dossier' : 'View Raw Notes'}</span>
+          <span>{showRaw ? 'Hide Details' : 'View Full Details'}</span>
           {showRaw ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
         </button>
       </div>
@@ -118,7 +118,7 @@ export const HotelDeck: React.FC<HotelDeckProps> = ({ hotels, rawText }) => {
                 </div>
               ) : (
                 <div className="text-[11px] text-slate-500 italic">
-                  Concierge concierge-verified property
+                  Verified accommodation details
                 </div>
               )}
             </div>

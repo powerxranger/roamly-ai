@@ -23,11 +23,11 @@ export const Navbar: React.FC<NavbarProps> = ({ isOnline, llmCalls, onOpenSpecs 
                 Roamly<span className="text-blue-500">.ai</span>
               </span>
               <span className="text-[10px] font-semibold tracking-wider uppercase px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                Concierge
+                Planner
               </span>
             </div>
             <p className="text-xs text-slate-400 hidden sm:block">
-              Autonomous Travel Intelligence
+              AI Travel Planning
             </p>
           </div>
         </div>
@@ -65,7 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({ isOnline, llmCalls, onOpenSpecs 
             {isOnline === true ? (
               <>
                 <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                <span className="hidden xs:inline">Concierge</span> Online
+                <span className="hidden xs:inline">System</span> Online
               </>
             ) : isOnline === false ? (
               <>

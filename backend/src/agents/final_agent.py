@@ -28,7 +28,7 @@ def final_agent(state: TravelState):
         )
 
         synthesis: ExecutiveSynthesis = structured_llm.invoke([
-            SystemMessage(content="You are an elite travel concierge. Emit strictly structured executive travel synthesis quoting all budgets in Indian Rupees (₹ / INR)."),
+            SystemMessage(content="You are a helpful travel planner. Emit a clear trip summary and budget quoting all amounts in Indian Rupees (₹ / INR)."),
             HumanMessage(content=prompt),
         ])
 
@@ -58,7 +58,7 @@ def final_agent(state: TravelState):
 
     budget_line = f"- Total Estimated Budget: {synthesis.estimated_budget}\n\n" if synthesis.estimated_budget else ""
     recs_section = (
-        f"## Final Recommendations\n" + "\n".join(f"- {rec}" for rec in synthesis.recommendations)
+        f"## Travel Tips\n" + "\n".join(f"- {rec}" for rec in synthesis.recommendations)
         if synthesis.recommendations
         else ""
     )

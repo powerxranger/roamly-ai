@@ -7,7 +7,7 @@ DESTINATION_EXTRACTION_PROMPT = """Extract the primary travel destination city o
 Return ONLY the clean destination name (e.g. 'Tokyo', 'Paris', 'Rome').
 """
 
-ROUTER_SYSTEM_PROMPT = """You are the Lead Travel Supervisor in an autonomous multi-agent concierge system.
+ROUTER_SYSTEM_PROMPT = """You are the Lead Travel Supervisor in an autonomous multi-agent travel planning system.
 Analyze the user's travel request semantically to determine the required agent activations.
 
 Existing Trip State:
@@ -21,7 +21,7 @@ Query:
 
 Instructions:
 1. Determine the intent_type:
-   - 'initial_planning' for new journey requests
+   - 'initial_planning' for new trip requests
    - 'refine_itinerary' for adjustments to days, activities, attractions, pacing, or day trips
    - 'update_accommodations' for questions or changes to hotels, stays, or rooms
    - 'update_transit' for flights, routes, airports, or airlines
@@ -35,7 +35,7 @@ Instructions:
 
 3. Extract or preserve the primary destination (e.g. 'Tokyo & Kyoto, Japan'). Keep established destination unless user explicitly changes it.
 4. Extract primary_city as the single main municipality for weather lookups (e.g. 'Tokyo' if destination is 'Tokyo & Kyoto, Japan').
-5. Extract duration_days as an integer ONLY if explicitly specified or implied by the user (e.g. 'weekend' -> 3, '2 weeks' -> 14, '5 days' -> 5). If the user does not specify a duration, leave duration_days as null/None so the concierge can scout web consensus for the ideal length.
+5. Extract duration_days as an integer ONLY if explicitly specified or implied by the user (e.g. 'weekend' -> 3, '2 weeks' -> 14, '5 days' -> 5). If the user does not specify a duration, leave duration_days as null/None so the system can check web consensus for the ideal length.
 6. Provide a clear refinement_summary describing what the user wants adjusted.
 """
 
@@ -55,10 +55,10 @@ Provide:
 """
 
 HOTEL_STRUCTURED_PROMPT = """Analyze the real-time accommodation search results for {destination}.
-Curate exactly 3 standout accommodation recommendations:
-1. One Luxury property (5-star, top amenities, upscale location)
-2. One Boutique property (charming neighborhood, character, mid-to-high tier)
-3. One Smart Value property (practical, great transit access, well-reviewed budget/mid-range)
+Recommend exactly 3 good accommodation options:
+1. One Luxury property (upscale amenities, convenient location)
+2. One Boutique property (local charm, mid-to-high tier)
+3. One Smart Value property (practical, comfortable, well-reviewed budget/mid-range)
 
 Search Context:
 {hotel_data}
@@ -83,27 +83,27 @@ Instructions:
 1. Determine duration_days:
    - If User-Specified Duration is provided, use that exact count.
    - Otherwise, adopt the travel consensus from the Web Search (typically between 3 and 10 days to ensure full coverage without filler).
-2. Set duration_rationale explaining why this timeframe is optimal for {destination}.
-3. Emit an ordered list of days (Day 1 through Day {duration_days}).
+2. Set duration_rationale explaining why this timeframe works well for {destination}.
+3. Emit an ordered list of days (Day 1 through Day N, where N is the determined duration_days).
 For each day:
 - day_number: integer (1, 2, 3...)
 - title: concise descriptive day theme
 - morning: key landmark, scenic area, or morning exploration
-- afternoon: afternoon cultural activity, neighborhood stroll, or scenic spot
-- evening: curated dinner recommendation or evening leisure
+- afternoon: afternoon activity, neighborhood stroll, or scenic spot
+- evening: dinner recommendation or evening leisure
 - highlights: 2 to 3 concise bullet highlights
 """
 
-FINAL_STRUCTURED_PROMPT = """Synthesize an executive travel overview and budget for a trip to {destination}.
+FINAL_STRUCTURED_PROMPT = """Create a clear travel summary and estimated budget for a trip to {destination}.
 
 Context:
 - Flight Timing: {flight_results}
-- Stays & Sanctuaries: {hotel_results}
+- Hotels & Stays: {hotel_results}
 - Climate Outlook: {weather_results}
 - Itinerary Preview: {itinerary}
 
 Provide:
-1. trip_summary: 2 vivid, polished paragraphs capturing the atmosphere, highlights, and best travel window.
+1. trip_summary: 2 clear, helpful paragraphs covering the highlights, key activities, and best travel timing.
 2. estimated_budget: Total estimated budget range per traveler quoted in Indian Rupees (₹ / INR, e.g. '₹2,50,000 - ₹3,50,000 per traveler total'). All figures must strictly be in Indian Rupees (₹).
-3. recommendations: 3 to 4 essential insider concierge tips for transport, reservations, and seasonal preparation.
+3. recommendations: 3 to 4 practical travel tips for transport, reservations, and seasonal preparation.
 """

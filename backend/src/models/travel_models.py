@@ -74,13 +74,13 @@ class HotelOption(BaseModel):
     price_range: Optional[str] = Field(default=None, description="Estimated nightly rate, e.g. '$240/night'")
     location: Optional[str] = Field(default=None, description="Neighborhood or area")
     amenities: list[str] = Field(default_factory=list, description="Key amenities")
-    description: str = Field(default="", description="Curator summary")
+    description: str = Field(default="", description="Hotel summary")
 
 
 class HotelList(BaseModel):
     """Wrapper for Hotel Agent structured output."""
 
-    hotels: list[HotelOption] = Field(default_factory=list, description="Curated hotel options")
+    hotels: list[HotelOption] = Field(default_factory=list, description="Recommended hotel options")
 
 
 class ItineraryDayPlan(BaseModel):
@@ -98,7 +98,7 @@ class ItineraryPlan(BaseModel):
     """Wrapper for Itinerary Agent structured output."""
 
     duration_days: int = Field(default=5, description="Total days in the itinerary")
-    duration_rationale: Optional[str] = Field(default=None, description="Concierge rationale for why this duration was selected")
+    duration_rationale: Optional[str] = Field(default=None, description="Reasoning for recommended trip duration")
     days: list[ItineraryDayPlan] = Field(default_factory=list, description="Ordered daily schedule")
 
 
@@ -114,9 +114,9 @@ class WeatherPlan(BaseModel):
 class ExecutiveSynthesis(BaseModel):
     """Structured overview emitted directly by Final Agent."""
 
-    trip_summary: str = Field(..., description="2-paragraph vivid narrative of the journey")
+    trip_summary: str = Field(..., description="Clear summary of the trip")
     estimated_budget: Optional[str] = Field(default=None, description="Total estimated budget range per traveler")
-    recommendations: list[str] = Field(default_factory=list, description="3-4 insider concierge tips")
+    recommendations: list[str] = Field(default_factory=list, description="3-4 practical travel tips")
 
 
 class TripPlan(BaseModel):
@@ -125,7 +125,7 @@ class TripPlan(BaseModel):
     destination_title: str = Field(..., description="Destination header")
     duration_label: str = Field(..., description="Duration label, e.g. '7 Days'")
     estimated_budget: Optional[str] = Field(default=None, description="Total budget estimate")
-    overview_summary: str = Field(..., description="Executive narrative summary")
+    overview_summary: str = Field(..., description="Trip overview summary")
     flights: FlightInfo = Field(default_factory=FlightInfo)
     hotels: list[HotelOption] = Field(default_factory=list)
     itinerary_days: list[ItineraryDayPlan] = Field(default_factory=list)

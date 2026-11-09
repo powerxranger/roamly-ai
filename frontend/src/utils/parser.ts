@@ -57,9 +57,9 @@ export function parseTripResponse(
 
   // Default fallback if backend plan payload is somehow missing (Zero regex)
   return {
-    destinationTitle: data.destination || baseQuery || query || 'Bespoke Journey',
+    destinationTitle: data.destination || baseQuery || query || 'Custom Trip',
     durationLabel: '7 Days',
-    overviewSummary: data.answer || 'Bespoke travel blueprint generated for your journey.',
+    overviewSummary: data.answer || 'Travel plan generated for your trip.',
     flights: { rawText: data.flight_results || '' },
     hotels: [],
     itineraryDays: [],

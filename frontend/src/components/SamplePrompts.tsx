@@ -26,7 +26,7 @@ const SAMPLE_PROMPTS = [
     tag: 'Adventure',
   },
   {
-    title: 'Bali Villa Sanctuary',
+    title: 'Bali Villa Getaway',
     query: 'Plan a 4-day tropical vacation to Bali (Ubud and Seminyak) with private villa recommendations, beaches, and cafe culture.',
     emoji: '🌿',
     tag: 'Retreat',
@@ -38,7 +38,7 @@ export const SamplePrompts: React.FC<SamplePromptsProps> = ({ onSelectPrompt, di
     <div className="w-full">
       <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3 px-1">
         <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-        <span>Curated Journey Inspirations</span>
+        <span>Sample Trip Ideas</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
