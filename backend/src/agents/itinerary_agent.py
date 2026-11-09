@@ -79,7 +79,7 @@ def itinerary_agent(state: TravelState):
 
     header_text = f"**Duration**: {len(days)} Days"
     if rationale:
-        header_text += f" — *{rationale}*\n\n"
+        header_text += f" - *{rationale}*\n\n"
     else:
         header_text += "\n\n"
 

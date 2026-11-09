@@ -1,7 +1,7 @@
 [project]
 name = "roamly-ai"
 version = "0.1.0"
-description = "Roamly AI — Multi-Agent Travel Planner"
+description = "Roamly AI - Multi-Agent Travel Planner"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [

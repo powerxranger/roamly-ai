@@ -1,4 +1,4 @@
-# Roamly AI — React Frontend ✈️
+# Roamly AI - React Frontend ✈️
 
 A modern, high-performance React frontend for Roamly AI built with **Vite**, **TypeScript**, and **Tailwind CSS**.
 
