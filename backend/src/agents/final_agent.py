@@ -32,19 +32,16 @@ def final_agent(state: TravelState):
             HumanMessage(content=prompt),
         ])
 
-    except Exception:
-        synthesis = ExecutiveSynthesis(
-            trip_summary=(
-                f"An extraordinary bespoke journey across {destination}, harmonizing cultural landmarks with curated boutique stays. "
-                f"This itinerary offers an ideal balance of iconic exploration, culinary immersion, and relaxed discovery."
-            ),
-            estimated_budget="₹2,75,000 - ₹3,85,000 per traveler",
-            recommendations=[
-                "Secure major attraction tickets and rail passes 3 to 4 weeks prior to departure.",
-                "Reserve dining at premier venues well in advance.",
-                "Pack light, versatile layers and comfortable footwear for walking tours.",
-            ],
-        )
+    except Exception as e:
+        existing_plan = state.get("plan")
+        if existing_plan:
+            synthesis = ExecutiveSynthesis(
+                trip_summary=existing_plan.get("overview_summary", ""),
+                estimated_budget=existing_plan.get("estimated_budget"),
+                recommendations=existing_plan.get("recommendations", []),
+            )
+        else:
+            raise RuntimeError(f"FinalAgent failed to synthesize travel plan for '{destination}': {e}") from e
 
     # Assemble the clean typed TripPlan model (Zero regex)
     structured_plan = assemble_trip_plan(
@@ -59,14 +56,19 @@ def final_agent(state: TravelState):
         duration_days=state.get("intent", {}).get("duration_days"),
     )
 
+    budget_line = f"- Total Estimated Budget: {synthesis.estimated_budget}\n\n" if synthesis.estimated_budget else ""
+    recs_section = (
+        f"## Final Recommendations\n" + "\n".join(f"- {rec}" for rec in synthesis.recommendations)
+        if synthesis.recommendations
+        else ""
+    )
+
     formatted_answer = (
         f"## Trip Summary\n"
         f"{synthesis.trip_summary}\n\n"
-        f"## Estimated Budget\n"
-        f"- Total Estimated Budget: {synthesis.estimated_budget or '₹2,75,000 - ₹3,85,000 per traveler'}\n\n"
-        f"## Final Recommendations\n" +
-        "\n".join(f"- {rec}" for rec in synthesis.recommendations)
-    )
+        f"{budget_line}"
+        f"{recs_section}"
+    ).strip()
 
     return {
         "messages": [AIMessage(content=formatted_answer)],

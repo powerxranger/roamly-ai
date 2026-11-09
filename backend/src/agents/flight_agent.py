@@ -36,18 +36,11 @@ def flight_agent(state: TravelState):
             HumanMessage(content=prompt),
         ])
 
-    except Exception:
+    except Exception as e:
         if existing_model:
             flight_info = FlightInfo(**existing_model)
         else:
-            flight_info = FlightInfo(
-                duration="Varies by departure city",
-                fare_range="₹65,000 - ₹95,000 typical",
-                airlines=["Major International Carriers"],
-                airports=["Primary International Hub"],
-                season_tips="Book 6-8 weeks prior to departure for best rates.",
-                summary=f"Direct and 1-stop routes available to {destination}.",
-            )
+            raise RuntimeError(f"FlightAgent failed to scout flight routes for '{destination}': {e}") from e
 
     model_dict = flight_info.model_dump()
     formatted_text = (

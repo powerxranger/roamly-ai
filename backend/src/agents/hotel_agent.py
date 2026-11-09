@@ -38,36 +38,11 @@ def hotel_agent(state: TravelState):
 
         hotels = result.hotels
 
-    except Exception:
+    except Exception as e:
         if existing_model:
             hotels = [HotelOption(**h) for h in existing_model]
         else:
-            hotels = [
-                HotelOption(
-                    name=f"The Grand {destination} Sanctuary",
-                    tier="Luxury",
-                    price_range="₹28,000 - ₹45,000/night",
-                    location=f"Prime Central {destination}",
-                    amenities=["Spa & Wellness", "Fine Dining", "Concierge"],
-                    description="Premier luxury sanctuary offering bespoke service.",
-                ),
-                HotelOption(
-                    name=f"Boutique Heritage Inn {destination}",
-                    tier="Boutique",
-                    price_range="₹16,000 - ₹26,000/night",
-                    location=f"Arts & Cultural District",
-                    amenities=["Bespoke Design", "Artisanal Breakfast", "Transit Access"],
-                    description="Charming boutique residence with localized character.",
-                ),
-                HotelOption(
-                    name=f"Urban Station Hotel {destination}",
-                    tier="Value",
-                    price_range="₹7,500 - ₹12,000/night",
-                    location=f"Central Station Hub",
-                    amenities=["Fast Wi-Fi", "Express Check-in", "Subway Steps"],
-                    description="Modern, efficient stay tailored for easy exploration.",
-                ),
-            ]
+            raise RuntimeError(f"HotelAgent failed to scout accommodations for '{destination}': {e}") from e
 
     model_dicts = [h.model_dump() for h in hotels]
 

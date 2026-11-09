@@ -1,7 +1,6 @@
 """Semantic Router Agent: classifies travel queries and routes execution without keyword matching."""
 
 from langchain_core.messages import HumanMessage, SystemMessage
-from pydantic import ValidationError
 
 from src.agents.prompts import ROUTER_SYSTEM_PROMPT
 from src.clients.llm import get_llm
@@ -34,18 +33,8 @@ def router_agent(state: TravelState) -> dict:
             SystemMessage(content="You are a precise JSON travel router."),
             HumanMessage(content=prompt),
         ])
-    except (ValidationError, Exception):
-        is_initial = not (has_flights or has_hotels or has_itinerary)
-        intent = TravelIntent(
-            intent_type="initial_planning" if is_initial else "refine_itinerary",
-            destination=existing_dest or "Custom Journey",
-            duration_days=None,
-            needs_flights=is_initial,
-            needs_hotels=is_initial,
-            needs_weather=is_initial,
-            needs_itinerary=True,
-            refinement_summary=user_query if not is_initial else "",
-        )
+    except Exception as e:
+        raise RuntimeError(f"RouterAgent failed to classify travel intent: {e}") from e
 
     intent_dict = intent.model_dump()
     final_destination = intent.destination or existing_dest or "Custom Journey"

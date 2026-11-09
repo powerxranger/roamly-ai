@@ -42,7 +42,7 @@ def itinerary_agent(state: TravelState):
             search_res = run_async(tavily_mcp_search(search_query))
             duration_context = truncate(search_res, 1000)
         except Exception:
-            duration_context = f"Leading travel guides recommend 4 to 6 days for a well-paced visit to {destination}."
+            duration_context = ""
 
     refinement_context = ""
     if existing_model and intent.get("refinement_summary"):
@@ -68,46 +68,12 @@ def itinerary_agent(state: TravelState):
         days = result.days
         rationale = result.duration_rationale
 
-    except Exception:
+    except Exception as e:
         if existing_model:
             days = [ItineraryDayPlan(**d) for d in existing_model]
-            rationale = "Retained previous itinerary schedule."
+            rationale = "Retained established itinerary schedule."
         else:
-            days = [
-                ItineraryDayPlan(
-                    day_number=1,
-                    title=f"Arrival & Orientation in {destination}",
-                    morning="Arrival, airport transfer, and hotel check-in.",
-                    afternoon=f"Introductory stroll through the historic center of {destination}.",
-                    evening="Welcome dinner at a traditional local bistro.",
-                    highlights=["Airport transit", "Neighborhood orientation", "Dinner"],
-                ),
-                ItineraryDayPlan(
-                    day_number=2,
-                    title="Iconic Landmarks & Cultural Highlights",
-                    morning="Morning visit to primary historic landmarks and viewpoints.",
-                    afternoon="Guided exploration of renowned cultural museums or gardens.",
-                    evening="Scenic twilight walk and artisanal culinary experience.",
-                    highlights=["Landmark exploration", "Cultural immersion", "Evening tasting"],
-                ),
-                ItineraryDayPlan(
-                    day_number=3,
-                    title="Neighborhood Gems & Scenic Excursion",
-                    morning="Local market tour and artisanal coffee tasting.",
-                    afternoon="Scenic transit or day excursion to nearby picturesque vistas.",
-                    evening="Relaxed dinner featuring regional delicacies.",
-                    highlights=["Market tour", "Scenic excursion", "Regional dining"],
-                ),
-                ItineraryDayPlan(
-                    day_number=4,
-                    title="Hidden Sanctuaries & Farewell Evening",
-                    morning="Exploration of local artisan workshops and quiet gardens.",
-                    afternoon="Panoramic skyline or waterfront views and bespoke shopping.",
-                    evening="Signature celebratory tasting dinner.",
-                    highlights=["Artisan workshops", "Panoramic views", "Farewell dinner"],
-                ),
-            ]
-            rationale = f"Curated 4-day itinerary representing the consensus recommended timeframe for {destination}."
+            raise RuntimeError(f"ItineraryAgent failed to generate itinerary for '{destination}': {e}") from e
 
     model_dicts = [d.model_dump() for d in days]
 

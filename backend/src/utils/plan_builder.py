@@ -28,23 +28,19 @@ def assemble_trip_plan(
     itinerary_days = [ItineraryDayPlan(**d) for d in (itinerary_data or [])]
     weather = WeatherPlan(**(weather_data or {}))
 
-    days_count = len(itinerary_days) or duration_days or 5
-    duration_label = f"{days_count} Days"
+    days_count = len(itinerary_days) or duration_days or 0
+    duration_label = f"{days_count} Days" if days_count else "Curated Duration"
 
     plan = TripPlan(
         destination_title=destination or "Bespoke Journey",
         duration_label=duration_label,
-        estimated_budget=estimated_budget or "₹2,50,000 - ₹3,75,000 per traveler",
-        overview_summary=overview_summary or "Bespoke travel plan curated by autonomous concierges.",
+        estimated_budget=estimated_budget,
+        overview_summary=overview_summary or f"Customized travel dossier curated for {destination}.",
         flights=flights,
         hotels=hotels,
         itinerary_days=itinerary_days,
         weather=weather,
-        recommendations=recommendations or [
-            "Secure high-speed rail passes prior to arrival for seamless transit.",
-            "Make reservations for signature dining at least 4 weeks in advance.",
-            "Carry a compact universal power bank during full-day excursions.",
-        ],
+        recommendations=recommendations or [],
     )
 
     return plan.model_dump()

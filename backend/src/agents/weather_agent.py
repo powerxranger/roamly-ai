@@ -28,38 +28,31 @@ def weather_agent(state: TravelState):
         # Parse dict/json from MCP tool
         curr_dict = raw_current if isinstance(raw_current, dict) else json.loads(str(raw_current)) if str(raw_current).startswith("{") else {}
 
-        condition = curr_dict.get("condition", "Pleasant and clear")
-        temp = curr_dict.get("temperature_c", 20)
-        humidity = curr_dict.get("humidity", 55)
+        if "temperature_c" not in curr_dict:
+            err_msg = curr_dict.get("message") or f"Invalid climate response for {city}"
+            raise RuntimeError(f"Weather service returned error: {err_msg}")
+
+        condition = curr_dict.get("condition", "clear")
+        temp = curr_dict["temperature_c"]
+        humidity = curr_dict.get("humidity", 50)
 
         weather_plan = WeatherPlan(
-            current_conditions=f"{condition.capitalize()}, {humidity}% humidity",
+            current_conditions=f"{str(condition).capitalize()}, {humidity}% humidity",
             temperature=f"{round(float(temp))}°C",
-            forecast_summary=f"Favorable conditions expected across {city} with seasonal variability.",
+            forecast_summary=f"Meteorological conditions across {city}.",
             packing_list=[
                 "Comfortable walking footwear for full-day exploration",
-                "Lightweight waterproof shell or compact travel umbrella",
+                "Lightweight weather-appropriate layering garments",
                 "Universal power bank and plug adapter",
-                "Breathable layering garments",
-                "Smart casual evening attire",
+                "Compact travel umbrella or rain protection",
             ],
         )
 
-    except Exception:
+    except Exception as e:
         if existing_model:
             weather_plan = WeatherPlan(**existing_model)
         else:
-            weather_plan = WeatherPlan(
-                current_conditions=f"Pleasant seasonal climate in {city}",
-                temperature="18°C - 24°C",
-                forecast_summary=f"Seasonal forecasts suggest mild conditions across {city}.",
-                packing_list=[
-                    "Comfortable walking shoes",
-                    "Compact umbrella or light rain layer",
-                    "Universal power bank and plug adapter",
-                    "Versatile breathable layering pieces",
-                ],
-            )
+            raise RuntimeError(f"WeatherAgent failed to retrieve climate data for '{city}': {e}") from e
 
     model_dict = weather_plan.model_dump()
     formatted_text = (
