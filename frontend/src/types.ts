@@ -1,6 +1,7 @@
 export interface TravelRequest {
   message: string;
   thread_id?: string | null;
+  stream?: boolean;
 }
 
 export interface TransitOptionPayload {
@@ -88,6 +89,21 @@ export interface TravelErrorResponse {
 }
 
 export type TravelResponse = TravelSuccessResponse | TravelErrorResponse;
+
+export type StreamEventType = 'start' | 'node_complete' | 'complete' | 'error';
+
+export interface StreamEvent {
+  event: StreamEventType;
+  thread_id?: string;
+  node?: string;
+  intent_type?: string;
+  destination?: string;
+  origin?: string;
+  result?: TravelSuccessResponse;
+  error?: string;
+  status_code?: number;
+  missing?: string[];
+}
 
 export interface HealthResponse {
   status: string;

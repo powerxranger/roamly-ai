@@ -1,10 +1,11 @@
+import json
 import os
 import traceback
 import uvicorn
 
 from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
 
 from src.config.settings import (
@@ -13,7 +14,7 @@ from src.config.settings import (
     GROQ_API_KEY,
     has_llm_key,
 )
-from src.graph.runner import arun_travel_agent
+from src.graph.runner import arun_travel_agent, astream_travel_agent
 
 
 app = FastAPI(
@@ -35,6 +36,7 @@ if CORS_ORIGINS:
 class TravelRequest(BaseModel):
     message: str
     thread_id: str | None = None
+    stream: bool = False
 
 
 @app.get("/")
@@ -102,8 +104,74 @@ async def health_check():
 # Planning
 # =========================
 
+@app.post("/api/travel/stream")
+async def travel_planner_stream(request_data: TravelRequest):
+    """Server-Sent Events (SSE) streaming endpoint for real-time multi-agent execution."""
+    user_message = request_data.message.strip()
+
+    if not user_message:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "success": False,
+                "error": "Message cannot be empty."
+            }
+        )
+
+    async def sse_event_generator():
+        try:
+            async for event_payload in astream_travel_agent(
+                user_input=user_message,
+                thread_id=request_data.thread_id
+            ):
+                yield f"data: {json.dumps(event_payload)}\n\n"
+        except ValueError as e:
+            missing_keys = []
+            if not GEMINI_API_KEY and not GROQ_API_KEY:
+                missing_keys = ["GEMINI_API_KEY or GROQ_API_KEY"]
+            err_dict = {
+                "event": "error",
+                "status_code": 428,
+                "error": str(e),
+                "missing": missing_keys,
+            }
+            yield f"data: {json.dumps(err_dict)}\n\n"
+        except Exception as e:
+            err_msg = str(e)
+            status_code = 500
+            user_friendly = err_msg
+            if "rate_limit_exceeded" in err_msg or "429" in err_msg or "413" in err_msg:
+                status_code = 429
+                user_friendly = (
+                    "AI rate limit temporarily reached. "
+                    "Please wait 10-15 seconds and try again."
+                )
+            print("ERROR in stream:", e)
+            traceback.print_exc()
+            err_dict = {
+                "event": "error",
+                "status_code": status_code,
+                "error": user_friendly,
+                "raw_error": err_msg,
+            }
+            yield f"data: {json.dumps(err_dict)}\n\n"
+
+    return StreamingResponse(
+        sse_event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+            "X-Accel-Buffering": "no",
+        }
+    )
+
+
 @app.post("/api/travel")
 async def travel_planner(request_data: TravelRequest):
+    if request_data.stream:
+        return await travel_planner_stream(request_data)
+
     try:
         user_message = request_data.message.strip()
 

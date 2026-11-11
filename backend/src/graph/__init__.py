@@ -6,8 +6,8 @@ def __getattr__(name: str):
         from src.graph.graph import build_graph, get_travel_graph
 
         return locals()[name]
-    if name in ("run_travel_agent", "arun_travel_agent"):
-        from src.graph.runner import arun_travel_agent, run_travel_agent
+    if name in ("run_travel_agent", "arun_travel_agent", "astream_travel_agent"):
+        from src.graph.runner import arun_travel_agent, astream_travel_agent, run_travel_agent
 
         return locals()[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -16,6 +16,7 @@ def __getattr__(name: str):
 __all__ = [
     "TravelState",
     "arun_travel_agent",
+    "astream_travel_agent",
     "build_graph",
     "get_travel_graph",
     "initial_state",

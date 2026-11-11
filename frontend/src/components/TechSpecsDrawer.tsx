@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Cpu, GitFork, Server, Zap, CheckCircle2, Copy, Check, ExternalLink, ShieldAlert } from 'lucide-react';
+import { X, Cpu, GitFork, Zap, CheckCircle2, Copy, Check, ExternalLink, ShieldAlert } from 'lucide-react';
 
 interface TechSpecsDrawerProps {
   isOpen: boolean;

@@ -2,6 +2,7 @@
 
 import asyncio
 import uuid
+from collections.abc import AsyncGenerator
 from langchain_core.messages import HumanMessage
 
 from src.config.settings import has_llm_key
@@ -103,6 +104,80 @@ async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> di
 
     run_llm_calls = max(result.get("llm_calls", 0) - initial_llm_calls, 0)
     return _format_run_result(thread_id, result, run_llm_calls=run_llm_calls)
+
+
+async def astream_travel_agent(
+    user_input: str,
+    thread_id: str | None = None,
+) -> AsyncGenerator[dict, None]:
+    """Async generator yielding real-time execution events as nodes complete in LangGraph."""
+    _verify_llm_configured()
+
+    if not thread_id:
+        thread_id = f"user_{uuid.uuid4().hex}"
+
+    config = {
+        "configurable": {
+            "thread_id": thread_id
+        }
+    }
+
+    graph = get_travel_graph()
+
+    existing_state = None
+    initial_llm_calls = 0
+    try:
+        existing_snapshot = await graph.aget_state(config)
+        if existing_snapshot and existing_snapshot.values and existing_snapshot.values.get("user_query"):
+            existing_state = existing_snapshot.values
+            initial_llm_calls = existing_state.get("llm_calls", 0)
+    except Exception:
+        existing_state = None
+        initial_llm_calls = 0
+
+    input_data = _prepare_graph_input(user_input, existing_state)
+
+    yield {
+        "event": "start",
+        "thread_id": thread_id,
+    }
+
+    async for chunk in graph.astream(input_data, config=config, stream_mode="updates"):
+        for node_name, node_update in chunk.items():
+            if node_name == "router_agent":
+                intent = node_update.get("intent") or {}
+                yield {
+                    "event": "node_complete",
+                    "node": "router_agent",
+                    "intent_type": intent.get("intent_type", "initial_planning"),
+                    "destination": node_update.get("destination", ""),
+                    "origin": node_update.get("origin", ""),
+                }
+            elif node_name == "scout_fanout":
+                yield {
+                    "event": "node_complete",
+                    "node": "scout_fanout",
+                }
+            elif node_name in ("flight_agent", "hotel_agent", "weather_agent"):
+                yield {
+                    "event": "node_complete",
+                    "node": node_name,
+                }
+            elif node_name in ("itinerary_agent", "guardrail_agent", "advisor_agent"):
+                yield {
+                    "event": "node_complete",
+                    "node": node_name,
+                }
+
+    final_snapshot = await graph.aget_state(config)
+    final_values = final_snapshot.values if final_snapshot else {}
+    run_llm_calls = max(final_values.get("llm_calls", 0) - initial_llm_calls, 0)
+    formatted_result = _format_run_result(thread_id, final_values, run_llm_calls=run_llm_calls)
+
+    yield {
+        "event": "complete",
+        "result": formatted_result,
+    }
 
 
 def run_travel_agent(user_input: str, thread_id: str | None = None) -> dict:

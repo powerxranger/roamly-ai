@@ -1019,6 +1019,80 @@ class TestPydanticArchitecture(unittest.TestCase):
         formatted_default = _format_run_result("thread_123", mock_result)
         self.assertEqual(formatted_default["llm_calls"], 7)
 
+    def test_astream_travel_agent_emits_realtime_events(self):
+        """Verify astream_travel_agent yields start, node_complete, and complete events."""
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock, patch
+        from langchain_core.messages import AIMessage
+        from src.graph.runner import astream_travel_agent
+
+        mock_graph = MagicMock()
+
+        # Mock graph.astream yielding chunks for node execution
+        async def fake_astream(*args, **kwargs):
+            yield {
+                "router_agent": {
+                    "destination": "Kyoto",
+                    "origin": "Tokyo",
+                    "intent": {"intent_type": "initial_planning"},
+                }
+            }
+            yield {"scout_fanout": {}}
+            yield {"flight_agent": {}}
+            yield {"hotel_agent": {}}
+            yield {"weather_agent": {}}
+            yield {"itinerary_agent": {}}
+
+        mock_graph.astream = fake_astream
+
+        mock_final_snapshot = MagicMock()
+        mock_final_snapshot.values = {
+            "destination": "Kyoto",
+            "origin": "Tokyo",
+            "messages": [AIMessage(content="Kyoto 3-day plan ready.")],
+            "llm_calls": 5,
+            "flight_results": "Train details",
+            "hotel_results": "Ryokan details",
+            "weather_results": "Sunny 20C",
+            "itinerary": "Day 1-3 details",
+            "response_type": "plan",
+        }
+        mock_graph.aget_state = AsyncMock(return_value=mock_final_snapshot)
+
+        async def collect_events():
+            events = []
+            async for ev in astream_travel_agent("Plan a trip to Kyoto", thread_id="test_stream_123"):
+                events.append(ev)
+            return events
+
+        with patch("src.graph.runner._verify_llm_configured"), \
+             patch("src.graph.runner.get_travel_graph", return_value=mock_graph):
+            events = asyncio.run(collect_events())
+
+        # Verify event sequence
+        event_types = [e["event"] for e in events]
+        self.assertEqual(event_types[0], "start")
+        self.assertEqual(events[0]["thread_id"], "test_stream_123")
+
+        node_events = [e for e in events if e["event"] == "node_complete"]
+        nodes_emitted = [e["node"] for e in node_events]
+        self.assertIn("router_agent", nodes_emitted)
+        self.assertIn("scout_fanout", nodes_emitted)
+        self.assertIn("flight_agent", nodes_emitted)
+        self.assertIn("hotel_agent", nodes_emitted)
+        self.assertIn("weather_agent", nodes_emitted)
+        self.assertIn("itinerary_agent", nodes_emitted)
+
+        router_event = next(e for e in node_events if e["node"] == "router_agent")
+        self.assertEqual(router_event["destination"], "Kyoto")
+        self.assertEqual(router_event["origin"], "Tokyo")
+
+        self.assertEqual(event_types[-1], "complete")
+        complete_event = events[-1]
+        self.assertTrue(complete_event["result"]["success"])
+        self.assertEqual(complete_event["result"]["destination"], "Kyoto")
+        self.assertEqual(complete_event["result"]["llm_calls"], 5)
+
 
 if __name__ == "__main__":
     unittest.main()

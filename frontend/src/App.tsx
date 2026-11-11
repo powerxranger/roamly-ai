@@ -14,8 +14,8 @@ import { SamplePrompts } from './components/SamplePrompts';
 import { TechSpecsDrawer } from './components/TechSpecsDrawer';
 import { UserMessageCard } from './components/UserMessageCard';
 import { AssistantMessageCard } from './components/AssistantMessageCard';
-import { PlannerTask, ChatMessage } from './types';
-import { checkHealth, planTravel, ApiError } from './api';
+import { PlannerTask, ChatMessage, StreamEvent } from './types';
+import { checkHealth, planTravelStream, ApiError } from './api';
 
 const INITIAL_PLANNING_TASKS: PlannerTask[] = [
   {
@@ -57,7 +57,7 @@ const FOLLOWUP_PLANNING_TASKS: PlannerTask[] = [
     id: 'supervisor_router',
     label: 'Supervisor Router',
     sublabel: 'Analyzing intent and selecting execution path',
-    icon: 'synthesis',
+    icon: 'itinerary',
     status: 'in_progress',
     technicalRole: 'LangGraph Conditional Router',
   },
@@ -159,58 +159,87 @@ export const App: React.FC = () => {
       setMessages(prev => [...prev, newUserMessage]);
     }
 
-    let stageTimer1: ReturnType<typeof setTimeout>;
-    let stageTimer2: ReturnType<typeof setTimeout>;
-
     if (isFollowUp) {
-      setTasks(FOLLOWUP_PLANNING_TASKS);
-      stageTimer1 = setTimeout(() => {
-        setTasks(prev => prev.map(t =>
-          t.id === 'supervisor_router'
-            ? { ...t, status: 'completed' }
-            : t.id === 'specialist_scout'
-            ? { ...t, status: 'in_progress' }
-            : t
-        ));
-      }, 1000);
-
-      stageTimer2 = setTimeout(() => {
-        setTasks(prev => prev.map(t =>
-          ['supervisor_router', 'specialist_scout'].includes(t.id)
-            ? { ...t, status: 'completed' }
-            : t.id === 'synthesis_response'
-            ? { ...t, status: 'in_progress' }
-            : t
-        ));
-      }, 2400);
+      setTasks(FOLLOWUP_PLANNING_TASKS.map(t =>
+        t.id === 'supervisor_router' ? { ...t, status: 'in_progress' } : { ...t, status: 'pending' }
+      ));
     } else {
-      // Phase 1: Parallel scout tasks are activated concurrently
       setTasks([
         { ...INITIAL_PLANNING_TASKS[0], status: 'in_progress' },
         { ...INITIAL_PLANNING_TASKS[1], status: 'in_progress' },
         { ...INITIAL_PLANNING_TASKS[2], status: 'in_progress' },
         { ...INITIAL_PLANNING_TASKS[3], status: 'pending' },
       ]);
-
-      stageTimer1 = setTimeout(() => {
-        setTasks(prev => prev.map(t =>
-          ['flight_scout', 'stays_curator', 'climate_intel'].includes(t.id)
-            ? { ...t, status: 'completed' }
-            : t.id === 'journey_architect'
-            ? { ...t, status: 'in_progress' }
-            : t
-        ));
-      }, 2200);
     }
 
     try {
-      const response = await planTravel({
-        message: textToSubmit,
-        thread_id: threadId,
-      });
+      const handleStreamEvent = (streamEvent: StreamEvent) => {
+        if (streamEvent.event === 'node_complete') {
+          const node = streamEvent.node;
+          if (node === 'router_agent') {
+            setTasks(prev => prev.map(t =>
+              t.id === 'supervisor_router'
+                ? { ...t, status: 'completed' }
+                : t.id === 'specialist_scout'
+                ? { ...t, status: 'in_progress' }
+                : t
+            ));
+          } else if (node === 'scout_fanout') {
+            setTasks(prev => prev.map(t =>
+              ['flight_scout', 'stays_curator', 'climate_intel'].includes(t.id)
+                ? { ...t, status: 'in_progress' }
+                : t
+            ));
+          } else if (node === 'flight_agent') {
+            setTasks(prev => {
+              const next = prev.map(t => t.id === 'flight_scout' ? { ...t, status: 'completed' as const } : t);
+              const remaining = next.filter(t => ['stays_curator', 'climate_intel'].includes(t.id) && t.status !== 'completed');
+              if (remaining.length === 0) {
+                return next.map(t => t.id === 'journey_architect' ? { ...t, status: 'in_progress' as const } : t);
+              }
+              return next;
+            });
+          } else if (node === 'hotel_agent') {
+            setTasks(prev => {
+              const next = prev.map(t => t.id === 'stays_curator' ? { ...t, status: 'completed' as const } : t);
+              const remaining = next.filter(t => ['flight_scout', 'climate_intel'].includes(t.id) && t.status !== 'completed');
+              if (remaining.length === 0) {
+                return next.map(t => t.id === 'journey_architect' ? { ...t, status: 'in_progress' as const } : t);
+              }
+              return next;
+            });
+          } else if (node === 'weather_agent') {
+            setTasks(prev => {
+              const next = prev.map(t => t.id === 'climate_intel' ? { ...t, status: 'completed' as const } : t);
+              const remaining = next.filter(t => ['flight_scout', 'stays_curator'].includes(t.id) && t.status !== 'completed');
+              if (remaining.length === 0) {
+                return next.map(t => t.id === 'journey_architect' ? { ...t, status: 'in_progress' as const } : t);
+              }
+              return next;
+            });
+          } else if (node === 'itinerary_agent') {
+            setTasks(prev => prev.map(t =>
+              t.id === 'journey_architect' ? { ...t, status: 'completed' } : t
+            ));
+          } else if (node === 'advisor_agent') {
+            setTasks(prev => prev.map(t =>
+              t.id === 'specialist_scout' || t.id === 'synthesis_response'
+                ? { ...t, status: 'completed' }
+                : t
+            ));
+          } else if (node === 'guardrail_agent') {
+            setTasks(prev => prev.map(t => ({ ...t, status: 'completed' })));
+          }
+        }
+      };
 
-      clearTimeout(stageTimer1);
-      clearTimeout(stageTimer2);
+      const response = await planTravelStream(
+        {
+          message: textToSubmit,
+          thread_id: threadId,
+        },
+        handleStreamEvent
+      );
 
       // All planning tasks complete
       setTasks(prev => prev.map(t => ({ ...t, status: 'completed' })));
@@ -227,9 +256,6 @@ export const App: React.FC = () => {
       setMessages(prev => [...prev, newAssistantMessage]);
 
     } catch (err: unknown) {
-      clearTimeout(stageTimer1);
-      clearTimeout(stageTimer2);
-
       let message = 'An unexpected error occurred while creating your travel plan.';
       if (err instanceof ApiError) {
         message = err.message;
