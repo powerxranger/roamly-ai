@@ -214,9 +214,9 @@ class ItineraryPlan(BaseModel):
     trip_summary: Optional[str] = Field(default="", description="2 clear paragraphs covering transit, daily highlights, and key activities")
     estimated_budget: Optional[str] = Field(default=None, description="Total estimated budget range per traveler in relevant currency")
     recommendations: Optional[list[str]] = Field(default_factory=list, description="3 to 4 practical travel tips")
-    refinement_prompts: Optional[list[str]] = Field(
+    followup_suggestions: Optional[list[str]] = Field(
         default_factory=list,
-        description="2 to 3 concise follow-up suggestions inviting the traveler to tailor duration, budget, pace, or day trips",
+        description="3 concrete, destination-specific follow-up prompts written strictly in the traveler's voice as first-person requests (e.g. 'What are the best street food spots in Old Delhi?', 'Add a day trip to Nara for temples and deer park', 'Switch to boutique stays under $150/night')",
     )
     days: Optional[list[ItineraryDayPlan]] = Field(default_factory=list, description="Ordered daily schedule")
 
@@ -225,7 +225,7 @@ class ItineraryPlan(BaseModel):
     def coerce_days(cls, v):
         return [] if v is None else v
 
-    @field_validator("recommendations", "refinement_prompts", mode="before")
+    @field_validator("recommendations", "followup_suggestions", mode="before")
     @classmethod
     def coerce_plan_lists(cls, v):
         return [] if v is None else v
@@ -260,9 +260,24 @@ class TripPlan(BaseModel):
     itinerary_days: Optional[list[ItineraryDayPlan]] = Field(default_factory=list)
     weather: WeatherPlan = Field(default_factory=WeatherPlan)
     recommendations: Optional[list[str]] = Field(default_factory=list)
-    refinement_prompts: Optional[list[str]] = Field(default_factory=list, description="2 to 3 tailored follow-up suggestions")
+    followup_suggestions: Optional[list[str]] = Field(default_factory=list, description="3 concrete, destination-specific follow-up prompts")
 
-    @field_validator("hotels", "itinerary_days", "recommendations", "refinement_prompts", mode="before")
+    @field_validator("hotels", "itinerary_days", "recommendations", "followup_suggestions", mode="before")
     @classmethod
     def coerce_trip_plan_lists(cls, v):
+        return [] if v is None else v
+
+
+class AdvisorResponse(BaseModel):
+    """Structured response from the Local Advisor Agent."""
+
+    answer: str = Field(..., description="Authentic, structured response with specific recommendations and tips in markdown format")
+    followup_suggestions: Optional[list[str]] = Field(
+        default_factory=list,
+        description="2 to 3 concise, proactive follow-up prompts written strictly in the traveler's voice as first-person requests (e.g. 'Where can I find authentic street food near Marine Drive?', 'Add an evening street food walk to Day 2')",
+    )
+
+    @field_validator("followup_suggestions", mode="before")
+    @classmethod
+    def coerce_followup_suggestions(cls, v):
         return [] if v is None else v

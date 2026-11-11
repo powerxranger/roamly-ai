@@ -201,6 +201,7 @@ async def travel_planner(request_data: TravelRequest):
                 "hotel_results": result["hotel_results"],
                 "weather_results": result.get("weather_results", ""),
                 "itinerary": result["itinerary"],
+                "followup_suggestions": result.get("followup_suggestions", []),
                 "llm_calls": result["llm_calls"],
             }
         )

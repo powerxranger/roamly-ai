@@ -168,7 +168,12 @@ Instructions:
 3. Create trip_summary: 2 clear, helpful paragraphs covering arrival transit from {origin} to {destination}, daily highlights, and key activities. If train or driving is recommended, highlight that option clearly over flying. If either city lacks a commercial airport, explain the door-to-door transit route clearly. If origin and destination are the same, focus on local exploration.
 4. Set estimated_budget: Realistic total estimated budget range per traveler quoted in the relevant local or requested currency (e.g. '$1,500 - $2,200', '€1,200 - €1,800', or '₹45,000 - ₹65,000'), dynamically matching the trip duration and combining primary transit, hotel nights, meals, and local transport.
 5. Provide recommendations: 3 to 4 practical travel tips for transport, reservations, and seasonal preparation.
-6. Provide refinement_prompts: 2 to 3 concise, proactive customization questions or prompts inviting the traveler to tailor the plan (e.g. extending duration, adjusting budget or stay tier, or adding a specific nearby day trip).
+6. Provide followup_suggestions: Exactly 3 concrete, destination-specific follow-up prompts written strictly in the traveler's voice (first-person commands or questions ready for the user to send directly to the assistant):
+   - NEVER write questions addressed to the user (e.g. do NOT write 'Would you like to extend your trip?' or 'Do you prefer luxury hotels?').
+   - Provide 3 distinct, high-value angles:
+     * Suggestion 1 (Local Food & Culture): A specific food, cultural, or neighborhood inquiry for this destination (e.g. 'What are the best street food spots in Old Delhi?' or 'Recommend authentic ramen shops in Shinjuku').
+     * Suggestion 2 (Itinerary & Pacing): A concrete schedule modification or day trip (e.g. 'Add a day trip to Nara for temples and deer park' or 'Make Day 2 more relaxed with free time in the afternoon').
+     * Suggestion 3 (Stay or Transit Preference): A specific accommodation or transit adjustment (e.g. 'Switch accommodations to boutique hotels under $150/night' or 'How do I navigate between districts using local trains?').
 7. Emit an ordered list of days (Day 1 through Day N, where N is the determined duration_days).
 For each day:
 - day_number: integer (1, 2, 3...)
@@ -214,13 +219,15 @@ Real-Time Web Search Context:
 {search_context}
 
 Instructions:
-1. Provide a direct, structured, and engaging answer. Focus specifically on what was asked (e.g. food spots, sights, neighborhoods, cultural tips).
+1. Provide a direct, structured, and engaging answer in markdown format. Focus specifically on what was asked (e.g. food spots, sights, neighborhoods, cultural tips).
 2. For recommendations (food, restaurants, attractions, shopping), highlight 3 to 5 top authentic spots:
    - Spot Name & Neighborhood / Location
    - Why It's Known / Must-Try Specialties
    - Practical Tip (pricing or budget in local currency, best time to visit, queue tips)
 3. If applicable, connect the recommendation to their active itinerary (e.g., mention which day's planned activities are nearest to these spots).
-4. Do not rebuild the whole travel plan. Keep the response focused, authentic, and high-utility.
-5. Conclude with a brief, friendly tip and an offer to incorporate any of these spots into their daily schedule if they wish.
+4. Do not rebuild the whole travel plan. Keep the response focused, authentic, and high-utility. Do not add open-ended questions addressed to the user at the end of the text.
+5. Generate 2 to 3 concise, proactive followup_suggestions written strictly in the traveler's voice (first-person requests or questions ready for the user to send directly to the assistant):
+   - NEVER write questions addressed to the user (e.g. do NOT write 'Would you like to explore more?').
+   - Provide concrete, relevant actions or inquiries based on the topic just discussed (e.g. 'Where can I find authentic street food near Marine Drive?', 'Add an evening street food walk to Day 2', 'What are the best hours to avoid crowds?').
 """
 

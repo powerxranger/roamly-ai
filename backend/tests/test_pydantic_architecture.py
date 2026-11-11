@@ -524,7 +524,7 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(plan_dict["flights"]["primary_mode"], "Train")
 
     def test_proactive_refinement_levers_in_trip_plan(self):
-        """Verify assemble_trip_plan preserves proactive refinement prompts for traveler customization."""
+        """Verify assemble_trip_plan preserves follow-up suggestions for traveler customization."""
         prompts = [
             "Extend to 4 days to include a day trip to Versailles",
             "Switch to boutique stays in Saint-Germain under €180",
@@ -533,10 +533,10 @@ class TestPydanticArchitecture(unittest.TestCase):
         plan_dict = assemble_trip_plan(
             destination="Paris",
             overview_summary="Customizable 3-day Paris trip.",
-            refinement_prompts=prompts,
+            followup_suggestions=prompts,
         )
-        self.assertEqual(len(plan_dict["refinement_prompts"]), 3)
-        self.assertIn("Versailles", plan_dict["refinement_prompts"][0])
+        self.assertEqual(len(plan_dict["followup_suggestions"]), 3)
+        self.assertIn("Versailles", plan_dict["followup_suggestions"][0])
 
     def test_router_clarification_for_missing_origin_preserves_destination(self):
         """Verify that when a destination is identified without origin, router retains destination for multi-turn state."""
@@ -737,7 +737,7 @@ class TestPydanticArchitecture(unittest.TestCase):
             "trip_summary": "4-day cultural exploration in Kyoto with bullet train transit.",
             "estimated_budget": "¥60,000 - ¥90,000",
             "recommendations": ["Book Shinkansen tickets early", "Reserve temple visits in the morning"],
-            "refinement_prompts": ["Extend to 5 days to include Nara", "Add a traditional tea ceremony"],
+            "followup_suggestions": ["Extend to 5 days to include Nara", "Add a traditional tea ceremony"],
             "itinerary_model": [
                 {
                     "day_number": 1,
@@ -758,7 +758,7 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(result_existing["plan"]["destination_title"], "Kyoto")
         self.assertEqual(result_existing["plan"]["estimated_budget"], "¥60,000 - ¥90,000")
         self.assertEqual(result_existing["plan"]["overview_summary"], state_existing["trip_summary"])
-        self.assertEqual(len(result_existing["plan"]["refinement_prompts"]), 2)
+        self.assertEqual(len(result_existing["plan"]["followup_suggestions"]), 2)
         self.assertEqual(result_existing["llm_calls"], 0)
         self.assertIn("## Trip Summary", result_existing["messages"][0].content)
 
@@ -779,7 +779,7 @@ class TestPydanticArchitecture(unittest.TestCase):
             trip_summary="A memorable 2-day trip to Kyoto featuring bullet train transit and iconic temples.",
             estimated_budget="¥35,000 - ¥50,000",
             recommendations=["Take the Tokaido Shinkansen", "Visit Fushimi Inari early"],
-            refinement_prompts=["Add a day in Arashiyama", "Upgrade to a traditional machiya"],
+            followup_suggestions=["Add a day in Arashiyama", "Upgrade to a traditional machiya"],
             days=[
                 ItineraryDayPlan(
                     day_number=1,
@@ -888,10 +888,11 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(result["llm_calls"], 1)
 
     def test_advisor_agent_unbounded_context_and_direct_search(self):
-        """Verify advisor_agent extracts full multi-day itinerary context and executes with single LLM call."""
+        """Verify advisor_agent extracts full multi-day itinerary context, emits structured follow-up suggestions, and executes with single LLM call."""
         import asyncio
         from unittest.mock import AsyncMock, MagicMock, patch
         from src.agents.advisor_agent import advisor_agent
+        from src.models.travel_models import AdvisorResponse
 
         state = {
             "user_query": "What are the best street food spots?",
@@ -904,17 +905,24 @@ class TestPydanticArchitecture(unittest.TestCase):
             "llm_calls": 0,
         }
 
-        mock_llm = MagicMock()
-        mock_response = MagicMock()
-        mock_response.content = "Visit Sardar Refreshments near Tardeo for iconic Pav Bhaji."
-        mock_llm.ainvoke = AsyncMock(return_value=mock_response)
+        mock_structured_llm = MagicMock()
+        mock_response = AdvisorResponse(
+            answer="Visit Sardar Refreshments near Tardeo for iconic Pav Bhaji.",
+            followup_suggestions=[
+                "Where can I find authentic street food near Marine Drive?",
+                "Add an evening food walk to Day 2",
+            ],
+        )
+        mock_structured_llm.ainvoke = AsyncMock(return_value=mock_response)
 
         with patch("src.agents.advisor_agent.tavily_mcp_search", new=AsyncMock(return_value="Sardar Refreshments Pav Bhaji")), \
-             patch("src.agents.advisor_agent.get_llm", return_value=mock_llm):
+             patch("src.agents.advisor_agent.get_structured_llm", return_value=mock_structured_llm):
             result = asyncio.run(advisor_agent(state))
 
         self.assertEqual(result["response_type"], "conversation")
         self.assertIn("Sardar Refreshments", result["messages"][0].content)
+        self.assertEqual(len(result["followup_suggestions"]), 2)
+        self.assertIn("Marine Drive", result["followup_suggestions"][0])
         self.assertEqual(result["llm_calls"], 1)
 
     def test_travel_intent_scout_search_queries(self):
@@ -1014,6 +1022,16 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(formatted["llm_calls"], 2)
         self.assertEqual(formatted["response_type"], "plan")
         self.assertEqual(formatted["answer"], "Trip itinerary generated.")
+        self.assertEqual(formatted["followup_suggestions"], [])
+
+        # With follow-up suggestions from plan
+        mock_result_with_prompts = {
+            "messages": [AIMessage(content="Plan")],
+            "response_type": "plan",
+            "plan": {"destination_title": "Tokyo", "followup_suggestions": ["Add a day trip to Kamakura"]},
+        }
+        formatted_prompts = _format_run_result("thread_123", mock_result_with_prompts)
+        self.assertEqual(formatted_prompts["followup_suggestions"], ["Add a day trip to Kamakura"])
 
         # Without run_llm_calls fallback
         formatted_default = _format_run_result("thread_123", mock_result)

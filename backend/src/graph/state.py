@@ -27,7 +27,7 @@ class TravelState(TypedDict, total=False):
     trip_summary: Optional[str]
     estimated_budget: Optional[str]
     recommendations: Optional[list[str]]
-    refinement_prompts: Optional[list[str]]
+    followup_suggestions: Optional[list[str]]
     plan: Optional[dict[str, Any]]
     followup_history: list[str]
     response_type: Optional[str]
@@ -54,7 +54,7 @@ def initial_state(user_query: str) -> TravelState:
         "trip_summary": "",
         "estimated_budget": "",
         "recommendations": [],
-        "refinement_prompts": [],
+        "followup_suggestions": [],
         "plan": None,
         "followup_history": [],
         "response_type": "plan",

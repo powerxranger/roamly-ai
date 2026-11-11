@@ -79,7 +79,7 @@ export function parseTripResponse(
         rawText: data.plan.weather.raw_text || data.weather_results || '',
       },
       recommendations: data.plan.recommendations || [],
-      refinementPrompts: data.plan.refinement_prompts || [],
+      followupSuggestions: data.plan.followup_suggestions || data.followup_suggestions || [],
     };
   }
 
@@ -96,7 +96,7 @@ export function parseTripResponse(
       rawText: data.weather_results || '',
     },
     recommendations: [],
-    refinementPrompts: [],
+    followupSuggestions: data.followup_suggestions || [],
   };
 }
 

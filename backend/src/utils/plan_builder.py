@@ -21,7 +21,7 @@ def assemble_trip_plan(
     itinerary_data: list[dict[str, Any]] | None = None,
     weather_data: dict[str, Any] | None = None,
     duration_days: int | None = None,
-    refinement_prompts: list[str] | None = None,
+    followup_suggestions: list[str] | None = None,
 ) -> dict[str, Any]:
     """Assemble a typed TripPlan directly from structured agent outputs (No regex)."""
 
@@ -46,7 +46,7 @@ def assemble_trip_plan(
         itinerary_days=itinerary_days,
         weather=weather,
         recommendations=recommendations or [],
-        refinement_prompts=refinement_prompts or [],
+        followup_suggestions=followup_suggestions or [],
     )
 
     return plan.model_dump()

@@ -32,7 +32,7 @@ async def itinerary_agent(state: TravelState):
             trip_summary = existing_plan.get("overview_summary", "")
         estimated_budget = state.get("estimated_budget") or (existing_plan.get("estimated_budget") if existing_plan else None)
         recommendations = state.get("recommendations") or (existing_plan.get("recommendations", []) if existing_plan else [])
-        refinement_prompts = state.get("refinement_prompts") or (existing_plan.get("refinement_prompts", []) if existing_plan else [])
+        followup_suggestions = state.get("followup_suggestions") or (existing_plan.get("followup_suggestions", []) if existing_plan else [])
         llm_increment = 0
     else:
         requested_duration = intent.get("duration_days")
@@ -78,7 +78,7 @@ async def itinerary_agent(state: TravelState):
             trip_summary = result.trip_summary
             estimated_budget = result.estimated_budget
             recommendations = result.recommendations
-            refinement_prompts = result.refinement_prompts
+            followup_suggestions = result.followup_suggestions
             llm_increment = 1
 
         except Exception as e:
@@ -88,7 +88,7 @@ async def itinerary_agent(state: TravelState):
                 trip_summary = state.get("trip_summary", "")
                 estimated_budget = state.get("estimated_budget")
                 recommendations = state.get("recommendations", [])
-                refinement_prompts = state.get("refinement_prompts", [])
+                followup_suggestions = state.get("followup_suggestions", [])
                 llm_increment = 0
             else:
                 raise RuntimeError(f"ItineraryAgent failed to generate itinerary for '{destination}': {e}") from e
@@ -128,7 +128,7 @@ async def itinerary_agent(state: TravelState):
         itinerary_data=model_dicts,
         weather_data=state.get("weather_model"),
         duration_days=intent.get("duration_days") or (len(days) if days else None),
-        refinement_prompts=refinement_prompts,
+        followup_suggestions=followup_suggestions,
     )
 
     budget_line = f"- Total Estimated Budget: {estimated_budget}\n\n" if estimated_budget else ""
@@ -138,8 +138,8 @@ async def itinerary_agent(state: TravelState):
         else ""
     )
     refinements_section = (
-        f"## Want to Customize?\n" + "\n".join(f"- {p}" for p in refinement_prompts)
-        if refinement_prompts
+        f"## Suggested Follow-ups\n" + "\n".join(f"- {p}" for p in followup_suggestions)
+        if followup_suggestions
         else ""
     )
 
@@ -157,7 +157,7 @@ async def itinerary_agent(state: TravelState):
         "trip_summary": trip_summary,
         "estimated_budget": estimated_budget,
         "recommendations": recommendations,
-        "refinement_prompts": refinement_prompts,
+        "followup_suggestions": followup_suggestions,
         "plan": structured_plan,
         "response_type": "plan",
         "messages": [AIMessage(content=formatted_answer)],

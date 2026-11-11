@@ -3,9 +3,10 @@
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
 from src.agents.prompts import ADVISOR_SYSTEM_PROMPT
-from src.clients.llm import get_llm
+from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
+from src.models.travel_models import AdvisorResponse
 from src.utils.async_utils import bump_llm_calls
 
 
@@ -57,17 +58,26 @@ async def advisor_agent(state: TravelState) -> dict:
     )
 
     try:
-        llm = get_llm()
-        response = await llm.ainvoke([
+        structured_llm = get_structured_llm(AdvisorResponse)
+        response = await structured_llm.ainvoke([
             SystemMessage(content=f"You are an expert local guide and travel advisor for {destination}."),
             HumanMessage(content=prompt),
         ])
-        answer = response.content if hasattr(response, "content") else str(response)
+        if isinstance(response, AdvisorResponse):
+            answer = response.answer
+            followup_suggestions = response.followup_suggestions or []
+        elif isinstance(response, dict):
+            answer = response.get("answer", "")
+            followup_suggestions = response.get("followup_suggestions", [])
+        else:
+            answer = getattr(response, "answer", str(response))
+            followup_suggestions = getattr(response, "followup_suggestions", [])
     except Exception as e:
         raise RuntimeError(f"AdvisorAgent failed to answer '{user_query}': {e}") from e
 
     return {
         "messages": [AIMessage(content=answer)],
         "response_type": "conversation",
+        "followup_suggestions": followup_suggestions,
         "llm_calls": bump_llm_calls(state),
     }

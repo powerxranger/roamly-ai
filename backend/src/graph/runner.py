@@ -40,7 +40,7 @@ def _prepare_graph_input(user_input: str, existing_state: dict | None) -> dict:
             "trip_summary": existing_state.get("trip_summary", ""),
             "estimated_budget": existing_state.get("estimated_budget", ""),
             "recommendations": existing_state.get("recommendations", []),
-            "refinement_prompts": existing_state.get("refinement_prompts", []),
+            "followup_suggestions": existing_state.get("followup_suggestions", []),
             "plan": existing_state.get("plan"),
             "followup_history": followup_history,
             "llm_calls": 0,
@@ -55,6 +55,11 @@ def _format_run_result(thread_id: str, result: dict, run_llm_calls: int | None =
     final_answer = result["messages"][-1].content
     calls = run_llm_calls if run_llm_calls is not None else result.get("llm_calls", 0)
 
+    suggestions = (
+        result.get("followup_suggestions")
+        or (result.get("plan") or {}).get("followup_suggestions", [])
+    )
+
     return {
         "thread_id": thread_id,
         "response_type": result.get("response_type", "plan"),
@@ -65,6 +70,7 @@ def _format_run_result(thread_id: str, result: dict, run_llm_calls: int | None =
         "hotel_results": result.get("hotel_results", ""),
         "weather_results": result.get("weather_results", ""),
         "itinerary": result.get("itinerary", ""),
+        "followup_suggestions": suggestions,
         "llm_calls": calls,
     }
 

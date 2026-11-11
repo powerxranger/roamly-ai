@@ -1,4 +1,5 @@
 from src.models.travel_models import (
+    AdvisorResponse,
     FlightInfo,
     HotelList,
     HotelOption,
@@ -12,6 +13,7 @@ from src.models.travel_models import (
 )
 
 __all__ = [
+    "AdvisorResponse",
     "TravelIntent",
     "TransitInfo",
     "TransitOption",
