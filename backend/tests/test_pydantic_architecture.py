@@ -665,7 +665,7 @@ class TestPydanticArchitecture(unittest.TestCase):
         mock_resp.json.return_value = mock_api_response
 
         with patch("requests.get", return_value=mock_resp):
-            result = get_forecast("Tokyo", timeline="next 2 days")
+            result = get_forecast("Tokyo")
 
         self.assertEqual(result["city"], "Tokyo")
         self.assertEqual(len(result["daily_forecast"]), 2)
@@ -674,6 +674,8 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(day1["temp_min"], 16.0)
         self.assertEqual(day1["temp_max"], 22.0)
         self.assertEqual(day1["weather"], "Clear sky")
+        self.assertEqual(result["forecast_start"], "2026-11-12")
+        self.assertEqual(result["forecast_end"], "2026-11-13")
 
     def test_weather_agent_uses_openweather_mcp_with_dynamic_synthesis(self):
         """Verify weather_agent uses OpenWeather MCP multi-day timeline metrics and dynamically synthesizes WeatherPlan."""
