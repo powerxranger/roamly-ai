@@ -42,9 +42,9 @@ Instructions:
 
 7. Provide a clear refinement_summary describing what the user wants adjusted or asked.
 
-8. When intent_type is 'out_of_scope' or 'clarification_needed', provide a helpful guardrail_message:
-   - For 'out_of_scope': Politely inform the user that Roamly is dedicated specifically to travel and trip planning, and provide 2 to 3 sample travel queries they can try (e.g. 'Plan a 5-day trip to Tokyo', 'Best street food spots in Bangkok').
-   - For 'clarification_needed': Welcoming response asking which city, region, or travel style they have in mind, with 2 to 3 inspiring destination ideas.
+8. When intent_type is 'out_of_scope' or 'clarification_needed', dynamically generate a helpful, conversational guardrail_message:
+   - For 'out_of_scope': Politely state Roamly's focus on travel planning and suggest 2 to 3 sample travel ideas.
+   - For 'clarification_needed': Address the traveler's specific query directly. If they named a broad region or continent, suggest 2 to 3 specific route corridors within that area. If the destination was missing or vague, ask for their preferred destination or travel style and suggest 2 to 3 relevant ideas matching their vibe.
 """
 
 FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for travel from {origin} to {destination}.

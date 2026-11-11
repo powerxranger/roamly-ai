@@ -425,6 +425,32 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(result["response_type"], "conversation")
         self.assertIn("Roamly is dedicated exclusively", result["messages"][0].content)
 
+    def test_guardrail_agent_dynamic_fallback(self):
+        """Verify guardrail_agent dynamically invokes LLM with zero hardcoded branches."""
+        from unittest.mock import MagicMock, patch
+        from src.agents.guardrail_agent import guardrail_agent
+
+        mock_llm = MagicMock()
+        mock_response = MagicMock()
+        mock_response.content = "I specialize in travel planning. Try exploring 5 days in Tokyo!"
+        mock_llm.invoke.return_value = mock_response
+
+        state = {
+            "intent": {
+                "intent_type": "out_of_scope",
+                "guardrail_message": None,
+            },
+            "user_query": "Write a python function to compute fibonacci numbers",
+            "llm_calls": 1,
+        }
+
+        with patch("src.agents.guardrail_agent.get_llm", return_value=mock_llm):
+            result = guardrail_agent(state)
+
+        self.assertEqual(result["response_type"], "conversation")
+        self.assertIn("Tokyo", result["messages"][0].content)
+        self.assertEqual(result["llm_calls"], 2)
+
     def test_international_trip_plan_assembly(self):
         """Verify that assemble_trip_plan cleanly handles international trips with non-INR currencies."""
         flight_data = {
