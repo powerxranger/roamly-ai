@@ -10,50 +10,51 @@ import {
   ArrowLeft
 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
-import { ConciergeRadar } from './components/ConciergeRadar';
+import { PlanningRadar } from './components/PlanningRadar';
 import { ResultsViewer } from './components/ResultsViewer';
 import { SamplePrompts } from './components/SamplePrompts';
 import { TechSpecsDrawer } from './components/TechSpecsDrawer';
-import { ConciergeTask, TravelSuccessResponse } from './types';
+import { UserQueryCard } from './components/UserQueryCard';
+import { PlannerTask, TravelSuccessResponse } from './types';
 import { checkHealth, planTravel, ApiError } from './api';
 
-const INITIAL_CONCIERGE_TASKS: ConciergeTask[] = [
+const INITIAL_PLANNING_TASKS: PlannerTask[] = [
   {
     id: 'flight_scout',
-    label: 'Flight Scout',
-    sublabel: 'Scanning direct routes, airport hubs & live airfares',
+    label: 'Flights',
+    sublabel: 'Searching routes, airports, and airfares',
     icon: 'flight',
     status: 'pending',
     technicalRole: 'Remote Tavily MCP',
   },
   {
     id: 'stays_curator',
-    label: 'Stays Curator',
-    sublabel: 'Evaluating luxury sanctuaries, boutique villas & rates',
+    label: 'Hotels & Stays',
+    sublabel: 'Finding hotels, boutique stays, and nightly rates',
     icon: 'hotel',
     status: 'pending',
     technicalRole: 'Remote Tavily MCP',
   },
   {
     id: 'climate_intel',
-    label: 'Climate Intelligence',
-    sublabel: 'Gathering meteorological forecasts & packing essentials',
+    label: 'Weather & Packing',
+    sublabel: 'Checking weather forecast and packing essentials',
     icon: 'weather',
     status: 'pending',
     technicalRole: 'Local Stdio FastMCP',
   },
   {
     id: 'journey_architect',
-    label: 'Journey Architect',
-    sublabel: 'Harmonizing travel timings, stays & daily experiences',
+    label: 'Itinerary Planner',
+    sublabel: 'Building day-by-day schedules and activities',
     icon: 'itinerary',
     status: 'pending',
     technicalRole: 'LangGraph Barrier Fan-In',
   },
   {
-    id: 'master_concierge',
-    label: 'Master Concierge',
-    sublabel: 'Synthesizing complete bespoke travel dossier & budget',
+    id: 'trip_summary',
+    label: 'Trip Summary',
+    sublabel: 'Organizing your travel plan and estimated budget',
     icon: 'synthesis',
     status: 'pending',
     technicalRole: 'Overview & State Reducer',
@@ -62,10 +63,12 @@ const INITIAL_CONCIERGE_TASKS: ConciergeTask[] = [
 
 export const App: React.FC = () => {
   const [query, setQuery] = useState('');
+  const [initialQuery, setInitialQuery] = useState('');
   const [activeQuery, setActiveQuery] = useState('');
+  const [refinements, setRefinements] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
-  const [tasks, setTasks] = useState<ConciergeTask[]>(INITIAL_CONCIERGE_TASKS);
+  const [tasks, setTasks] = useState<PlannerTask[]>(INITIAL_PLANNING_TASKS);
   const [results, setResults] = useState<TravelSuccessResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
@@ -73,7 +76,7 @@ export const App: React.FC = () => {
 
   const resultsRef = useRef<HTMLDivElement>(null);
 
-  // When user has submitted a query or results exist, switch from centered landing to active dossier mode
+  // When user has submitted a query or results exist, switch from centered landing to active results mode
   const hasStarted = isProcessing || !!results || !!error;
 
   // Poll backend health on initial load and every 60s
@@ -102,17 +105,15 @@ export const App: React.FC = () => {
     };
   }, []);
 
-  const handlePromptSelect = (selectedPrompt: string) => {
-    setQuery(selectedPrompt);
-  };
-
   const handleResetTrip = () => {
     setResults(null);
     setError(null);
     setQuery('');
+    setInitialQuery('');
     setActiveQuery('');
+    setRefinements([]);
     setThreadId(null);
-    setTasks(INITIAL_CONCIERGE_TASKS);
+    setTasks(INITIAL_PLANNING_TASKS);
   };
 
   const handlePlanTrip = async (customQuery?: string) => {
@@ -121,16 +122,37 @@ export const App: React.FC = () => {
 
     setError(null);
     setIsProcessing(true);
-    setActiveQuery(textToSubmit);
     setQuery(''); // Clear input for next prompt
+
+    const isRefining = Boolean(initialQuery && results);
+
+    if (!initialQuery) {
+      setInitialQuery(textToSubmit);
+      setActiveQuery(textToSubmit);
+    } else {
+      setRefinements(prev => [...prev, textToSubmit]);
+      setActiveQuery(textToSubmit);
+    }
 
     // Phase 1: Parallel scout tasks are activated concurrently
     setTasks([
-      { ...INITIAL_CONCIERGE_TASKS[0], status: 'in_progress' },
-      { ...INITIAL_CONCIERGE_TASKS[1], status: 'in_progress' },
-      { ...INITIAL_CONCIERGE_TASKS[2], status: 'in_progress' },
-      { ...INITIAL_CONCIERGE_TASKS[3], status: 'pending' },
-      { ...INITIAL_CONCIERGE_TASKS[4], status: 'pending' },
+      {
+        ...INITIAL_PLANNING_TASKS[0],
+        status: 'in_progress',
+        sublabel: isRefining ? 'Evaluating flight adjustments...' : INITIAL_PLANNING_TASKS[0].sublabel
+      },
+      {
+        ...INITIAL_PLANNING_TASKS[1],
+        status: 'in_progress',
+        sublabel: isRefining ? 'Checking accommodations alignment...' : INITIAL_PLANNING_TASKS[1].sublabel
+      },
+      {
+        ...INITIAL_PLANNING_TASKS[2],
+        status: 'in_progress',
+        sublabel: isRefining ? 'Verifying regional climate...' : INITIAL_PLANNING_TASKS[2].sublabel
+      },
+      { ...INITIAL_PLANNING_TASKS[3], status: 'pending' },
+      { ...INITIAL_PLANNING_TASKS[4], status: 'pending' },
     ]);
 
     // Timed realistic visual transitions reflecting the LangGraph fan-out / barrier fan-in
@@ -139,7 +161,11 @@ export const App: React.FC = () => {
         ['flight_scout', 'stays_curator', 'climate_intel'].includes(t.id)
           ? { ...t, status: 'completed' }
           : t.id === 'journey_architect'
-          ? { ...t, status: 'in_progress' }
+          ? {
+              ...t,
+              status: 'in_progress',
+              sublabel: isRefining ? 'Updating day schedule with adjustments...' : t.sublabel
+            }
           : t
       ));
     }, 4500);
@@ -148,8 +174,12 @@ export const App: React.FC = () => {
       setTasks(prev => prev.map(t =>
         t.id === 'journey_architect'
           ? { ...t, status: 'completed' }
-          : t.id === 'master_concierge'
-          ? { ...t, status: 'in_progress' }
+          : t.id === 'trip_summary'
+          ? {
+              ...t,
+              status: 'in_progress',
+              sublabel: isRefining ? 'Finalizing updated trip plan...' : t.sublabel
+            }
           : t
       ));
     }, 8500);
@@ -163,7 +193,7 @@ export const App: React.FC = () => {
       clearTimeout(stageTimer1);
       clearTimeout(stageTimer2);
 
-      // All concierge tasks complete
+      // All planning tasks complete
       setTasks(prev => prev.map(t => ({ ...t, status: 'completed' })));
       setResults(response);
       setThreadId(response.thread_id);
@@ -177,7 +207,7 @@ export const App: React.FC = () => {
       clearTimeout(stageTimer1);
       clearTimeout(stageTimer2);
 
-      let message = 'An unexpected error occurred while curating your travel plan.';
+      let message = 'An unexpected error occurred while creating your travel plan.';
       if (err instanceof ApiError) {
         message = err.message;
       } else if (err instanceof Error) {
@@ -218,7 +248,7 @@ export const App: React.FC = () => {
       <TechSpecsDrawer
         isOpen={isTechSpecsOpen}
         onClose={() => setIsTechSpecsOpen(false)}
-        llmCalls={results?.llm_calls || 5}
+        llmCalls={results?.llm_calls ?? 0}
         threadId={threadId || undefined}
       />
 
@@ -237,7 +267,7 @@ export const App: React.FC = () => {
             <div className="space-y-4">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 border border-blue-500/20 text-xs font-semibold text-blue-400">
                 <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                <span>Autonomous Luxury Concierge</span>
+                <span>AI Travel Planner</span>
               </div>
 
               <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white leading-tight">
@@ -248,11 +278,11 @@ export const App: React.FC = () => {
               </h1>
 
               <p className="text-sm sm:text-base text-slate-400 max-w-xl mx-auto leading-relaxed">
-                Describe your dream escape in plain English. Autonomous concierges scout real-time flights, handpick boutique sanctuaries, and craft your bespoke journey.
+                Describe where you want to go in plain English. We search real-time flights, hotels, weather, and create your complete travel plan.
               </p>
             </div>
 
-            {/* Centered Luxury Input Box */}
+            {/* Centered Input Box */}
             <div className="w-full">
               <form
                 onSubmit={(e) => { e.preventDefault(); handlePlanTrip(); }}
@@ -273,7 +303,7 @@ export const App: React.FC = () => {
                 <div className="flex items-center justify-between pt-3 border-t border-slate-800/80 mt-2">
                   <div className="flex items-center gap-2 text-xs text-slate-500 hidden sm:flex">
                     <MapPin className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Press <kbd className="px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-400">Enter</kbd> to curate</span>
+                    <span>Press <kbd className="px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-400">Enter</kbd> to plan</span>
                   </div>
 
                   <button
@@ -284,12 +314,12 @@ export const App: React.FC = () => {
                     {isProcessing ? (
                       <>
                         <Loader2 className="h-4 w-4 animate-spin" />
-                        <span>Curating Blueprint...</span>
+                        <span>Planning Trip...</span>
                       </>
                     ) : (
                       <>
                         <Send className="h-4 w-4" />
-                        <span>Plan Journey</span>
+                        <span>Plan Trip</span>
                       </>
                     )}
                   </button>
@@ -308,34 +338,36 @@ export const App: React.FC = () => {
           </div>
         ) : (
           /* ==================================================================== */
-          /* SCENARIO B: ACTIVE DOSSIER STATE (Results & Live Radar take center stage) */
+          /* SCENARIO B: ACTIVE RESULTS STATE (Results & Live Radar take center stage) */
           /* ==================================================================== */
-          <div className="space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
 
-            {/* Top Toolbar: Back / New Trip Reset */}
-            <div className="flex items-center justify-between gap-4 pb-2">
+            {/* Top Toolbar: Plan Another Trip / New Search */}
+            <div className="flex items-center justify-between gap-4 pb-1">
               <button
                 type="button"
                 onClick={handleResetTrip}
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white border border-slate-800 transition shadow-sm"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900/90 hover:bg-slate-850 text-xs font-semibold text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 transition shadow-sm"
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
                 <span>Plan Another Trip</span>
               </button>
 
-              <div className="text-xs text-slate-400 font-medium truncate max-w-md hidden sm:block">
-                Query: <span className="text-slate-200 italic">"{activeQuery}"</span>
-              </div>
-
               <button
                 type="button"
                 onClick={handleResetTrip}
-                className="inline-flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-semibold"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-900/90 hover:bg-slate-850 text-xs font-semibold text-blue-400 hover:text-blue-300 border border-slate-800 hover:border-slate-700 transition"
               >
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span>New Search</span>
               </button>
             </div>
+
+            {/* Prominent User Prompt & Refinement History Card */}
+            <UserQueryCard
+              initialQuery={initialQuery || activeQuery}
+              refinements={refinements}
+            />
 
             {/* Error Alert Card */}
             {error && (
@@ -356,9 +388,9 @@ export const App: React.FC = () => {
               </div>
             )}
 
-            {/* Live Concierge Radar */}
-            <div className="max-w-4xl mx-auto w-full">
-              <ConciergeRadar
+            {/* Live Planning Radar */}
+            <div className="max-w-5xl mx-auto w-full">
+              <PlanningRadar
                 tasks={tasks}
                 isProcessing={isProcessing}
                 onOpenSpecs={() => setIsTechSpecsOpen(true)}
@@ -371,6 +403,7 @@ export const App: React.FC = () => {
                 <ResultsViewer
                   data={results}
                   query={activeQuery}
+                  baseQuery={initialQuery}
                   onOpenSpecs={() => setIsTechSpecsOpen(true)}
                 />
               </div>
@@ -396,7 +429,7 @@ export const App: React.FC = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isProcessing}
-              placeholder={isProcessing ? "Concierges scouting live travel streams..." : "Ask a refinement... e.g., 'Switch to boutique stays under $200' or 'Add day trip to Hakone'"}
+              placeholder={isProcessing ? "Searching live travel information..." : "Ask an update... e.g. 'Add a day trip to Hakone on Day 4' or 'Switch to boutique stays under ₹15,000'"}
               className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none"
             />
 
@@ -443,7 +476,7 @@ export const App: React.FC = () => {
               </a>
             </div>
             <p className="text-[11px] text-slate-600">
-              LangGraph StateGraph • FastMCP • Groq LPU High-Speed Inference
+              LangGraph StateGraph • FastMCP • Gemini Flash & Groq Inference
             </p>
           </div>
         </footer>

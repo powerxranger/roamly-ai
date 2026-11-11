@@ -1,12 +1,12 @@
 # Roamly AI ✈️
 
-A multi-agent AI travel planner powered by LangGraph. Describe the trip you want in plain English and get back flights, hotels, weather, and a complete day-by-day itinerary — researched for you in about a minute.
+A multi-agent AI travel planner powered by LangGraph. Describe the trip you want in plain English and get back flights, hotels, weather, and a complete day-by-day itinerary - researched for you in about a minute.
 
 ---
 
 ## 🧐 About
 
-Planning a trip usually means juggling multiple browser tabs — one for flights, another for hotels, a third for weather, and a notes app trying to fit it all together. **Roamly AI** streamlines this into a unified agentic workflow.
+Planning a trip usually means juggling multiple browser tabs: one for flights, another for hotels, a third for weather, and a notes app trying to fit it all together. **Roamly AI** streamlines this into a unified agentic workflow.
 
 You describe your travel desires in natural language:
 > *"Plan a 7-day trip to Tokyo and Kyoto in late October for two people, mid-range budget, interested in food and temples"*

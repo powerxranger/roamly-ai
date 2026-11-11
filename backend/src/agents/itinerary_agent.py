@@ -1,32 +1,104 @@
-"""Combines flight, hotel and weather results into a day-by-day itinerary."""
+"""Combines flight, hotel, weather, and live web consensus into a structured Pydantic itinerary plan."""
 
-import time
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 
-from src.agents.prompts import ITINERARY_AGENT_PROMPT, ITINERARY_SYSTEM_PROMPT
-from src.clients.llm import get_llm
+from src.agents.prompts import ITINERARY_STRUCTURED_PROMPT
+from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
-from src.utils.async_utils import bump_llm_calls, truncate
+from src.mcp_servers.remote import tavily_mcp_search
+from src.models.travel_models import ItineraryDayPlan, ItineraryPlan
+from src.utils.async_utils import bump_llm_calls, run_async
 
 
 def itinerary_agent(state: TravelState):
-    # Short pause to allow Groq rate-limiting token bucket to replenish after parallel fan-out
-    time.sleep(1.5)
+    intent = state.get("intent") or {}
+    existing_model = state.get("itinerary_model")
+    existing_itinerary = state.get("itinerary", "")
+    needs_itinerary = intent.get("needs_itinerary", True)
 
-    prompt = ITINERARY_AGENT_PROMPT.format(
-        user_query=state["user_query"],
-        flight_results=truncate(state.get("flight_results", ""), 800),
-        hotel_results=truncate(state.get("hotel_results", ""), 800),
-        weather_results=truncate(state.get("weather_results", ""), 400),
-    )
+    # If itinerary exists and user only changed stays or transit
+    if existing_itinerary and not needs_itinerary:
+        return {}
 
-    response = get_llm().invoke([
-        SystemMessage(content=ITINERARY_SYSTEM_PROMPT),
-        HumanMessage(content=prompt),
-    ])
+    destination = state.get("destination") or state.get("user_query", "")
+    requested_duration = intent.get("duration_days")
+
+    # If user didn't specify duration, scout live internet consensus
+    duration_context = ""
+    if requested_duration:
+        duration_label = f"{requested_duration} Days (User Requested)"
+        duration_context = f"The traveler explicitly requested a {requested_duration}-day itinerary."
+    elif existing_model:
+        duration_label = f"{len(existing_model)} Days (Preserved from prior session)"
+        duration_context = f"Maintaining the established {len(existing_model)}-day schedule."
+    else:
+        duration_label = "Unspecified (Determine based on travel guide consensus)"
+        try:
+            search_query = f"how many days to visit {destination} recommended itinerary duration travel guide"
+            search_res = run_async(tavily_mcp_search(search_query))
+            duration_context = str(search_res) if search_res else ""
+        except Exception:
+            duration_context = ""
+
+    refinement_context = ""
+    if existing_model and intent.get("refinement_summary"):
+        refinement_context = f"The user requested this specific refinement: '{intent.get('refinement_summary')}'. Incorporate this while preserving unaffected days."
+
+    try:
+        structured_llm = get_structured_llm(ItineraryPlan)
+        prompt = ITINERARY_STRUCTURED_PROMPT.format(
+            destination=destination,
+            requested_duration=duration_label,
+            duration_context=duration_context,
+            flight_results=state.get("flight_results", "") or "Direct regional transit.",
+            hotel_results=state.get("hotel_results", "") or "Standard accommodations.",
+            weather_results=state.get("weather_results", "") or "Seasonal climate.",
+            refinement_context=refinement_context or "Initial planning.",
+        )
+
+        result: ItineraryPlan = structured_llm.invoke([
+            SystemMessage(content="You are an expert travel planner. Determine the recommended trip length from travel consensus and emit structured day plans."),
+            HumanMessage(content=prompt),
+        ])
+
+        days = result.days
+        rationale = result.duration_rationale
+
+    except Exception as e:
+        if existing_model:
+            days = [ItineraryDayPlan(**d) for d in existing_model]
+            rationale = "Retained established itinerary schedule."
+        else:
+            raise RuntimeError(f"ItineraryAgent failed to generate itinerary for '{destination}': {e}") from e
+
+    model_dicts = [d.model_dump() for d in days]
+
+    header_text = f"**Duration**: {len(days)} Days"
+    if rationale:
+        header_text += f" - *{rationale}*\n\n"
+    else:
+        header_text += "\n\n"
+
+    day_blocks = []
+    for d in days:
+        d_lines = [f"### Day {d.day_number}: {d.title}"]
+        if d.morning:
+            d_lines.append(f"- Morning: {d.morning}")
+        if d.afternoon:
+            d_lines.append(f"- Afternoon: {d.afternoon}")
+        if d.evening:
+            d_lines.append(f"- Evening: {d.evening}")
+        if d.highlights:
+            d_lines.extend(f"- Highlight: {h}" for h in d.highlights)
+        day_blocks.append("\n".join(d_lines))
+
+    formatted_text = header_text + "\n\n".join(day_blocks)
 
     return {
-        "itinerary": response.content,
-        "messages": [response],
+        "itinerary_model": model_dicts,
+        "itinerary": formatted_text,
+        "messages": [
+            AIMessage(content="Itinerary generated")
+        ],
         "llm_calls": bump_llm_calls(state),
     }

@@ -27,16 +27,23 @@ os.environ["REQUESTS_CA_BUNDLE"] = certifi.where()
 # API keys
 # =========================
 
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY") or os.getenv("GOOGLE_API_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 OPENWEATHER_API_KEY = os.getenv("OPENWEATHER_API_KEY")
 
 
 # =========================
-# LLM
+# LLM Models & Providers
 # =========================
 
+# Primary: Google Gemini (high rate limits, 1,500 free requests/day)
+GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+
+# Fallback: Groq (free open-source model fallback)
 GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+GROQ_FALLBACK_MODEL = os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
 
 
 # =========================
@@ -53,6 +60,11 @@ CORS_ORIGINS = [
     ).split(",")
     if origin.strip()
 ]
+
+
+def has_llm_key() -> bool:
+    """Return True if at least one LLM provider key is configured."""
+    return bool(GEMINI_API_KEY or GROQ_API_KEY)
 
 
 def get_groq_api_key() -> str:

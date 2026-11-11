@@ -1,4 +1,4 @@
-# Roamly AI — Backend API ✈️
+# Roamly AI - Backend API ✈️
 
 The backend service for **Roamly AI**, an agentic travel planning application powered by **FastAPI**, **LangGraph**, and **FastMCP**.
 
