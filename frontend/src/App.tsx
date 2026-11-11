@@ -425,6 +425,7 @@ export const App: React.FC = () => {
                     baseQuery={initialQuery}
                     timestamp={message.timestamp}
                     onOpenSpecs={() => setIsTechSpecsOpen(true)}
+                    onSelectPrompt={(prompt) => handlePlanTrip(prompt)}
                   />
                 );
               })}

@@ -495,6 +495,21 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(plan_dict["flights"]["train_option"]["fare_range"], "€78 - €140")
         self.assertEqual(plan_dict["flights"]["primary_mode"], "Train")
 
+    def test_proactive_refinement_levers_in_trip_plan(self):
+        """Verify assemble_trip_plan preserves proactive refinement prompts for traveler customization."""
+        prompts = [
+            "Extend to 4 days to include a day trip to Versailles",
+            "Switch to boutique stays in Saint-Germain under €180",
+            "Make Day 2 more relaxed with evening Seine cruise",
+        ]
+        plan_dict = assemble_trip_plan(
+            destination="Paris",
+            overview_summary="Customizable 3-day Paris trip.",
+            refinement_prompts=prompts,
+        )
+        self.assertEqual(len(plan_dict["refinement_prompts"]), 3)
+        self.assertIn("Versailles", plan_dict["refinement_prompts"][0])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -38,6 +38,7 @@ def final_agent(state: TravelState):
                 trip_summary=existing_plan.get("overview_summary", ""),
                 estimated_budget=existing_plan.get("estimated_budget"),
                 recommendations=existing_plan.get("recommendations", []),
+                refinement_prompts=existing_plan.get("refinement_prompts", []),
             )
         else:
             raise RuntimeError(f"FinalAgent failed to synthesize travel plan for '{destination}': {e}") from e
@@ -54,12 +55,18 @@ def final_agent(state: TravelState):
         itinerary_data=state.get("itinerary_model"),
         weather_data=state.get("weather_model"),
         duration_days=intent.get("duration_days"),
+        refinement_prompts=synthesis.refinement_prompts,
     )
 
     budget_line = f"- Total Estimated Budget: {synthesis.estimated_budget}\n\n" if synthesis.estimated_budget else ""
     recs_section = (
-        f"## Travel Tips\n" + "\n".join(f"- {rec}" for rec in synthesis.recommendations)
+        f"## Travel Tips\n" + "\n".join(f"- {rec}" for rec in synthesis.recommendations) + "\n\n"
         if synthesis.recommendations
+        else ""
+    )
+    refinements_section = (
+        f"## Want to Customize?\n" + "\n".join(f"- {p}" for p in synthesis.refinement_prompts)
+        if synthesis.refinement_prompts
         else ""
     )
 
@@ -68,6 +75,7 @@ def final_agent(state: TravelState):
         f"{synthesis.trip_summary}\n\n"
         f"{budget_line}"
         f"{recs_section}"
+        f"{refinements_section}"
     ).strip()
 
     return {

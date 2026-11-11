@@ -63,6 +63,7 @@ export interface TravelPlanPayload {
     raw_text: string;
   };
   recommendations: string[];
+  refinement_prompts?: string[];
 }
 
 export interface TravelSuccessResponse {
@@ -181,6 +182,7 @@ export interface ParsedTripPlan {
   itineraryDays: ParsedItineraryDay[];
   weather: ParsedWeatherInfo;
   recommendations: string[];
+  refinementPrompts?: string[];
 }
 
 export interface ChatMessage {

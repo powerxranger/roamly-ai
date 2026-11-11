@@ -29,11 +29,33 @@ def guardrail_agent(state: TravelState) -> dict:
     intent = state.get("intent") or {}
     intent_type = intent.get("intent_type", "out_of_scope")
     custom_msg = intent.get("guardrail_message")
+    user_query = (state.get("user_query") or "").lower()
 
     if custom_msg and len(custom_msg.strip()) > 10:
         response_text = custom_msg.strip()
     elif intent_type == "clarification_needed":
-        response_text = DEFAULT_CLARIFICATION_MESSAGE
+        if "europe" in user_query:
+            response_text = (
+                "Europe has dozens of distinct travel corridors! To build the best itinerary for you:\n\n"
+                "1. **How many days do you have?** (e.g. 7 days vs 2 weeks)\n"
+                "2. **Which corridor appeals most to you?**\n"
+                "   - **Classic Capitals**: London, Paris, and Amsterdam (7 to 10 days)\n"
+                "   - **Mediterranean Sun**: Rome, Florence, and Amalfi Coast (8 to 10 days)\n"
+                "   - **Central Europe**: Vienna, Prague, and Budapest (7 days)\n\n"
+                "Reply with your preferred corridor or duration, and I will build your complete plan."
+            )
+        elif "southeast asia" in user_query or "asia" in user_query:
+            response_text = (
+                "Asia has incredible diversity! To build the right trip plan for you:\n\n"
+                "1. **How many days are you planning for?**\n"
+                "2. **Which region or style do you prefer?**\n"
+                "   - **Thailand & Vietnam**: Bangkok, Chiang Mai, and Hanoi for food and culture\n"
+                "   - **Japan Golden Route**: Tokyo, Kyoto, and Osaka for bullet trains and heritage\n"
+                "   - **Island Leisure**: Bali or Phuket for beaches and relaxation\n\n"
+                "Tell me which route or vibe you prefer, and I will map out the complete journey."
+            )
+        else:
+            response_text = DEFAULT_CLARIFICATION_MESSAGE
     else:
         response_text = DEFAULT_OUT_OF_SCOPE_MESSAGE
 

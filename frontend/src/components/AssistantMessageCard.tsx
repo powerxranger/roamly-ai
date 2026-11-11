@@ -11,6 +11,7 @@ interface AssistantMessageCardProps {
   baseQuery: string;
   timestamp: Date;
   onOpenSpecs: () => void;
+  onSelectPrompt?: (prompt: string) => void;
 }
 
 export const AssistantMessageCard: React.FC<AssistantMessageCardProps> = ({
@@ -20,6 +21,7 @@ export const AssistantMessageCard: React.FC<AssistantMessageCardProps> = ({
   baseQuery,
   timestamp,
   onOpenSpecs,
+  onSelectPrompt,
 }) => {
   const formattedTime = timestamp.toLocaleTimeString([], {
     hour: '2-digit',
@@ -64,6 +66,7 @@ export const AssistantMessageCard: React.FC<AssistantMessageCardProps> = ({
           data={data}
           query={query}
           baseQuery={baseQuery}
+          onSelectPrompt={onSelectPrompt}
         />
       ) : (
         <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 sm:p-7 shadow-2xl">

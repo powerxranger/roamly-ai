@@ -5,7 +5,8 @@ import {
   Hotel,
   CloudSun,
   ArrowRight,
-  Route
+  Route,
+  Sliders
 } from 'lucide-react';
 import { ActiveTab, TravelSuccessResponse } from '../types';
 import { parseTripResponse } from '../utils/parser';
@@ -19,9 +20,10 @@ interface ResultsViewerProps {
   data: TravelSuccessResponse;
   query: string;
   baseQuery?: string;
+  onSelectPrompt?: (prompt: string) => void;
 }
 
-export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQuery }) => {
+export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQuery, onSelectPrompt }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
 
   // Parse structured data from raw LLM responses
@@ -224,6 +226,32 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                       <span className="h-1.5 w-1.5 rounded-full bg-blue-400 mt-1.5 flex-shrink-0" />
                       <span>{rec}</span>
                     </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Proactive Refinement Levers */}
+            {parsedPlan.refinementPrompts && parsedPlan.refinementPrompts.length > 0 && (
+              <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-950/30 to-slate-900/90 border border-indigo-500/20 shadow-xl space-y-3">
+                <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-400">
+                  <Sliders className="h-4 w-4" />
+                  <span>Tailor This Trip</span>
+                </div>
+                <p className="text-xs text-slate-400">
+                  Want to adjust duration, stay tier, or pace? Click a suggestion or type your own request below:
+                </p>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {parsedPlan.refinementPrompts.map((prompt, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => onSelectPrompt?.(prompt)}
+                      className="text-left px-3.5 py-2 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/25 hover:border-indigo-500/50 text-xs font-medium text-indigo-200 transition-all flex items-center gap-2 group cursor-pointer"
+                    >
+                      <span>{prompt}</span>
+                      <ArrowRight className="h-3 w-3 text-indigo-400 opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all" />
+                    </button>
                   ))}
                 </div>
               </div>

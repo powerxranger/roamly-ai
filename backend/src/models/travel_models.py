@@ -237,10 +237,14 @@ class ExecutiveSynthesis(BaseModel):
     trip_summary: str = Field(..., description="Clear summary of the trip")
     estimated_budget: Optional[str] = Field(default=None, description="Total estimated budget range per traveler")
     recommendations: Optional[list[str]] = Field(default_factory=list, description="3-4 practical travel tips")
+    refinement_prompts: Optional[list[str]] = Field(
+        default_factory=list,
+        description="2 to 3 concise follow-up suggestions inviting the traveler to tailor duration, budget, pace, or day trips",
+    )
 
-    @field_validator("recommendations", mode="before")
+    @field_validator("recommendations", "refinement_prompts", mode="before")
     @classmethod
-    def coerce_recommendations(cls, v):
+    def coerce_synthesis_lists(cls, v):
         return [] if v is None else v
 
 
@@ -257,8 +261,9 @@ class TripPlan(BaseModel):
     itinerary_days: Optional[list[ItineraryDayPlan]] = Field(default_factory=list)
     weather: WeatherPlan = Field(default_factory=WeatherPlan)
     recommendations: Optional[list[str]] = Field(default_factory=list)
+    refinement_prompts: Optional[list[str]] = Field(default_factory=list, description="2 to 3 tailored follow-up suggestions")
 
-    @field_validator("hotels", "itinerary_days", "recommendations", mode="before")
+    @field_validator("hotels", "itinerary_days", "recommendations", "refinement_prompts", mode="before")
     @classmethod
     def coerce_trip_plan_lists(cls, v):
         return [] if v is None else v
