@@ -1,5 +1,4 @@
 from src.models.travel_models import (
-    ExecutiveSynthesis,
     FlightInfo,
     HotelList,
     HotelOption,
@@ -22,6 +21,5 @@ __all__ = [
     "ItineraryDayPlan",
     "ItineraryPlan",
     "WeatherPlan",
-    "ExecutiveSynthesis",
     "TripPlan",
 ]

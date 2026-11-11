@@ -65,12 +65,3 @@ CORS_ORIGINS = [
 def has_llm_key() -> bool:
     """Return True if at least one LLM provider key is configured."""
     return bool(GEMINI_API_KEY or GROQ_API_KEY)
-
-
-def get_groq_api_key() -> str:
-    if not GROQ_API_KEY:
-        raise ValueError(
-            "GROQ_API_KEY is missing. Please add it to your .env file."
-        )
-
-    return GROQ_API_KEY

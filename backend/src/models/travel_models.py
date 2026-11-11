@@ -247,24 +247,6 @@ class WeatherPlan(BaseModel):
         return [] if v is None else v
 
 
-
-class ExecutiveSynthesis(BaseModel):
-    """Structured overview emitted directly by Final Agent."""
-
-    trip_summary: str = Field(..., description="Clear summary of the trip")
-    estimated_budget: Optional[str] = Field(default=None, description="Total estimated budget range per traveler")
-    recommendations: Optional[list[str]] = Field(default_factory=list, description="3-4 practical travel tips")
-    refinement_prompts: Optional[list[str]] = Field(
-        default_factory=list,
-        description="2 to 3 concise follow-up suggestions inviting the traveler to tailor duration, budget, pace, or day trips",
-    )
-
-    @field_validator("recommendations", "refinement_prompts", mode="before")
-    @classmethod
-    def coerce_synthesis_lists(cls, v):
-        return [] if v is None else v
-
-
 class TripPlan(BaseModel):
     """Unified structured travel plan delivered directly to client (Zero regex required)."""
 

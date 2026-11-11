@@ -43,7 +43,6 @@ uv run python main.py
 ```
 - API server: **http://127.0.0.1:8000**
 - Interactive Swagger docs: **http://127.0.0.1:8000/docs**
-- Architecture map: **http://127.0.0.1:8000/architecture.html**
 
 ---
 

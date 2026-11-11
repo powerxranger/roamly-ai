@@ -102,7 +102,7 @@ export interface PlannerTask {
   id: string;
   label: string;
   sublabel: string;
-  icon: 'flight' | 'hotel' | 'weather' | 'itinerary' | 'synthesis';
+  icon: 'flight' | 'hotel' | 'weather' | 'itinerary';
   status: PlannerTaskStatus;
   technicalRole: string;
 }

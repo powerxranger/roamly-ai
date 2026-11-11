@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plane, Hotel, CloudSun, Compass, Sparkles, CheckCircle2, Loader2 } from 'lucide-react';
+import { Plane, Hotel, CloudSun, Compass, CheckCircle2, Loader2 } from 'lucide-react';
 import { PlannerTask } from '../types';
 
 interface PlanningRadarProps {
@@ -21,8 +21,6 @@ export const PlanningRadar: React.FC<PlanningRadarProps> = ({
         return <CloudSun className="h-4 w-4" />;
       case 'itinerary':
         return <Compass className="h-4 w-4" />;
-      case 'synthesis':
-        return <Sparkles className="h-4 w-4" />;
     }
   };
 

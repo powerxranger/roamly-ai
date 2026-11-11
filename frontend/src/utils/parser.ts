@@ -99,3 +99,6 @@ export function parseTripResponse(
     refinementPrompts: [],
   };
 }
+
+export const mapTripResponse = parseTripResponse;
+export const mapTripPlan = parseTripResponse;
