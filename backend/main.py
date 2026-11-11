@@ -23,15 +23,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-if CORS_ORIGINS:
-    allow_wildcard = "*" in CORS_ORIGINS
-    app.add_middleware(
-        CORSMiddleware,
-        allow_origins=["*"] if allow_wildcard else CORS_ORIGINS,
-        allow_credentials=not allow_wildcard,
-        allow_methods=["*"],
-        allow_headers=["*"],
-    )
+cors_origins = CORS_ORIGINS or ["*"]
+allow_wildcard = "*" in cors_origins
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"] if allow_wildcard else cors_origins,
+    allow_credentials=not allow_wildcard,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
 
 
 class TravelRequest(BaseModel):

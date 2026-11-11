@@ -51,12 +51,12 @@ GROQ_FALLBACK_MODEL = os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
 # =========================
 
 # Comma-separated origins allowed to call this API from a browser.
-# Defaults to standard local frontend dev server ports (Vite 5173, Next 3000).
+# Defaults to "*" so production deployments (Vercel) and local dev work automatically.
 CORS_ORIGINS = [
     origin.strip()
     for origin in os.getenv(
         "CORS_ORIGINS",
-        "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000",
+        "*",
     ).split(",")
     if origin.strip()
 ]
