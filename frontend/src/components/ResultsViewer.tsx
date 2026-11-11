@@ -4,7 +4,6 @@ import {
   Calendar,
   Hotel,
   CloudSun,
-  FileText,
   ArrowRight,
   Route
 } from 'lucide-react';
@@ -15,16 +14,14 @@ import { FlightBoard } from './FlightBoard';
 import { HotelDeck } from './HotelDeck';
 import { DailyTimeline } from './DailyTimeline';
 import { WeatherWidget } from './WeatherWidget';
-import { MarkdownRenderer } from './MarkdownRenderer';
 
 interface ResultsViewerProps {
   data: TravelSuccessResponse;
   query: string;
   baseQuery?: string;
-  onOpenSpecs: () => void;
 }
 
-export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQuery, onOpenSpecs }) => {
+export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQuery }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview');
 
   // Parse structured data from raw LLM responses
@@ -56,20 +53,14 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
       label: 'Climate & Packing',
       icon: <CloudSun className="h-4 w-4" />,
     },
-    {
-      id: 'full_plan',
-      label: 'Full Plan',
-      icon: <FileText className="h-4 w-4" />,
-    },
   ];
 
   return (
     <div className="w-full space-y-6">
-      {/* 1. Magazine-Style Trip Header */}
+      {/* 1. Trip Header */}
       <TripHeader
         plan={parsedPlan}
         rawResponse={data}
-        onOpenSpecs={onOpenSpecs}
       />
 
       {/* 2. Visual Navigation Tabs */}
@@ -100,8 +91,8 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
       <div className="transition-all duration-300">
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            {/* Quick Glimpse Cards: Itinerary highlight + Flight highlight + Stays highlight */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Quick Glimpse Cards: Itinerary + Transit + Stays + Climate */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
               {/* Daily Schedule Preview */}
               <div
@@ -124,7 +115,7 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-blue-400 font-semibold group-hover:translate-x-0.5 transition-transform">
-                  <span>Explore All Days</span>
+                  <span>Explore Schedule</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </div>
@@ -182,7 +173,35 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
                   </p>
                 </div>
                 <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-purple-400 font-semibold group-hover:translate-x-0.5 transition-transform">
-                  <span>Browse Accommodations</span>
+                  <span>Browse Stays</span>
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </div>
+              </div>
+
+              {/* Climate & Packing Preview */}
+              <div
+                onClick={() => setActiveTab('weather')}
+                className="cursor-pointer group p-5 rounded-3xl bg-slate-900/80 hover:bg-slate-900 border border-slate-800 hover:border-slate-700 transition-all duration-200 flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between text-xs text-amber-400 font-bold uppercase tracking-wider mb-2">
+                    <span className="flex items-center gap-1.5">
+                      <CloudSun className="h-3.5 w-3.5" />
+                      <span>Climate</span>
+                    </span>
+                    {parsedPlan.weather.temperature && (
+                      <span className="text-amber-300 font-semibold">{parsedPlan.weather.temperature}</span>
+                    )}
+                  </div>
+                  <h4 className="text-base font-bold text-white group-hover:text-amber-300 transition-colors">
+                    {parsedPlan.weather.currentConditions || 'Weather & Packing'}
+                  </h4>
+                  <p className="text-xs text-slate-400 mt-1 line-clamp-3 leading-relaxed">
+                    {parsedPlan.weather.forecastSummary || `${parsedPlan.weather.packingList.length} essential items in packing list`}
+                  </p>
+                </div>
+                <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-amber-400 font-semibold group-hover:translate-x-0.5 transition-transform">
+                  <span>Check Packing List</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </div>
               </div>
@@ -239,25 +258,8 @@ export const ResultsViewer: React.FC<ResultsViewerProps> = ({ data, query, baseQ
             destination={parsedPlan.destinationTitle}
           />
         )}
-
-        {activeTab === 'full_plan' && (
-          <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 sm:p-8 shadow-2xl">
-            <div className="pb-4 mb-4 border-b border-slate-800 flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Full Travel Plan (Markdown)
-              </span>
-              <button
-                type="button"
-                onClick={onOpenSpecs}
-                className="text-xs text-blue-400 hover:text-blue-300 font-medium"
-              >
-                Inspect Execution DAG
-              </button>
-            </div>
-            <MarkdownRenderer content={data.answer} />
-          </div>
-        )}
       </div>
     </div>
   );
 };
+

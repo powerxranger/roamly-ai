@@ -105,19 +105,7 @@ export interface PlannerTask {
   technicalRole: string;
 }
 
-// Backward compatibility alias
-export type ConciergeTask = PlannerTask;
-export type ConciergeTaskStatus = PlannerTaskStatus;
-
-export interface AgentProgress {
-  id: string;
-  label: string;
-  role: string;
-  category: 'parallel' | 'sequential';
-  status: 'pending' | 'running' | 'completed' | 'failed';
-}
-
-export type ActiveTab = 'overview' | 'itinerary' | 'flights' | 'hotels' | 'weather' | 'full_plan';
+export type ActiveTab = 'overview' | 'itinerary' | 'flights' | 'hotels' | 'weather';
 
 export interface ParsedTransitOption {
   mode: string;
@@ -192,4 +180,12 @@ export interface ParsedTripPlan {
   itineraryDays: ParsedItineraryDay[];
   weather: ParsedWeatherInfo;
   recommendations: string[];
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  data?: TravelSuccessResponse;
+  timestamp: Date;
 }

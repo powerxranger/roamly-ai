@@ -6,16 +6,15 @@ import {
   MapPin,
   ShieldAlert,
   Loader2,
-  PlusCircle,
-  ArrowLeft
+  PlusCircle
 } from 'lucide-react';
 import { Navbar } from './components/Navbar';
 import { PlanningRadar } from './components/PlanningRadar';
-import { ResultsViewer } from './components/ResultsViewer';
 import { SamplePrompts } from './components/SamplePrompts';
 import { TechSpecsDrawer } from './components/TechSpecsDrawer';
-import { UserQueryCard } from './components/UserQueryCard';
-import { PlannerTask, TravelSuccessResponse } from './types';
+import { UserMessageCard } from './components/UserMessageCard';
+import { AssistantMessageCard } from './components/AssistantMessageCard';
+import { PlannerTask, ChatMessage } from './types';
 import { checkHealth, planTravel, ApiError } from './api';
 
 const INITIAL_PLANNING_TASKS: PlannerTask[] = [
@@ -62,22 +61,22 @@ const INITIAL_PLANNING_TASKS: PlannerTask[] = [
 ];
 
 export const App: React.FC = () => {
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [query, setQuery] = useState('');
-  const [initialQuery, setInitialQuery] = useState('');
-  const [activeQuery, setActiveQuery] = useState('');
-  const [refinements, setRefinements] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [tasks, setTasks] = useState<PlannerTask[]>(INITIAL_PLANNING_TASKS);
-  const [results, setResults] = useState<TravelSuccessResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [threadId, setThreadId] = useState<string | null>(null);
   const [isTechSpecsOpen, setIsTechSpecsOpen] = useState(false);
 
-  const resultsRef = useRef<HTMLDivElement>(null);
+  const chatBottomRef = useRef<HTMLDivElement>(null);
 
-  // When user has submitted a query or results exist, switch from centered landing to active results mode
-  const hasStarted = isProcessing || !!results || !!error;
+  // When user has submitted a query or messages exist, switch from centered landing to active chat mode
+  const hasStarted = messages.length > 0 || isProcessing || !!error;
+
+  const latestAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant');
+  const latestResults = latestAssistantMessage?.data;
 
   // Poll backend health on initial load and every 60s
   useEffect(() => {
@@ -105,13 +104,17 @@ export const App: React.FC = () => {
     };
   }, []);
 
+  // Smooth scroll to bottom on new messages or when processing starts
+  useEffect(() => {
+    if (messages.length > 0 || isProcessing) {
+      chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages.length, isProcessing]);
+
   const handleResetTrip = () => {
-    setResults(null);
+    setMessages([]);
     setError(null);
     setQuery('');
-    setInitialQuery('');
-    setActiveQuery('');
-    setRefinements([]);
     setThreadId(null);
     setTasks(INITIAL_PLANNING_TASKS);
   };
@@ -124,32 +127,33 @@ export const App: React.FC = () => {
     setIsProcessing(true);
     setQuery(''); // Clear input for next prompt
 
-    const isRefining = Boolean(initialQuery && results);
+    const isFollowUp = messages.length > 0;
 
-    if (!initialQuery) {
-      setInitialQuery(textToSubmit);
-      setActiveQuery(textToSubmit);
-    } else {
-      setRefinements(prev => [...prev, textToSubmit]);
-      setActiveQuery(textToSubmit);
-    }
+    const newUserMessage: ChatMessage = {
+      id: `user_${Date.now()}`,
+      role: 'user',
+      content: textToSubmit,
+      timestamp: new Date(),
+    };
+
+    setMessages(prev => [...prev, newUserMessage]);
 
     // Phase 1: Parallel scout tasks are activated concurrently
     setTasks([
       {
         ...INITIAL_PLANNING_TASKS[0],
         status: 'in_progress',
-        sublabel: isRefining ? 'Evaluating flight adjustments...' : INITIAL_PLANNING_TASKS[0].sublabel
+        sublabel: isFollowUp ? 'Evaluating flight adjustments...' : INITIAL_PLANNING_TASKS[0].sublabel
       },
       {
         ...INITIAL_PLANNING_TASKS[1],
         status: 'in_progress',
-        sublabel: isRefining ? 'Checking accommodations alignment...' : INITIAL_PLANNING_TASKS[1].sublabel
+        sublabel: isFollowUp ? 'Checking accommodations alignment...' : INITIAL_PLANNING_TASKS[1].sublabel
       },
       {
         ...INITIAL_PLANNING_TASKS[2],
         status: 'in_progress',
-        sublabel: isRefining ? 'Verifying regional climate...' : INITIAL_PLANNING_TASKS[2].sublabel
+        sublabel: isFollowUp ? 'Verifying regional climate...' : INITIAL_PLANNING_TASKS[2].sublabel
       },
       { ...INITIAL_PLANNING_TASKS[3], status: 'pending' },
       { ...INITIAL_PLANNING_TASKS[4], status: 'pending' },
@@ -164,7 +168,7 @@ export const App: React.FC = () => {
           ? {
               ...t,
               status: 'in_progress',
-              sublabel: isRefining ? 'Updating day schedule with adjustments...' : t.sublabel
+              sublabel: isFollowUp ? 'Updating day schedule with adjustments...' : t.sublabel
             }
           : t
       ));
@@ -178,7 +182,7 @@ export const App: React.FC = () => {
           ? {
               ...t,
               status: 'in_progress',
-              sublabel: isRefining ? 'Finalizing updated trip plan...' : t.sublabel
+              sublabel: isFollowUp ? 'Finalizing updated travel plan...' : t.sublabel
             }
           : t
       ));
@@ -195,13 +199,17 @@ export const App: React.FC = () => {
 
       // All planning tasks complete
       setTasks(prev => prev.map(t => ({ ...t, status: 'completed' })));
-      setResults(response);
       setThreadId(response.thread_id);
 
-      // Smooth scroll to results
-      setTimeout(() => {
-        resultsRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 150);
+      const newAssistantMessage: ChatMessage = {
+        id: `assistant_${Date.now()}`,
+        role: 'assistant',
+        content: response.answer,
+        data: response,
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, newAssistantMessage]);
 
     } catch (err: unknown) {
       clearTimeout(stageTimer1);
@@ -240,7 +248,7 @@ export const App: React.FC = () => {
       {/* Navigation */}
       <Navbar
         isOnline={isOnline}
-        llmCalls={results?.llm_calls}
+        llmCalls={latestResults?.llm_calls}
         onOpenSpecs={() => setIsTechSpecsOpen(true)}
       />
 
@@ -248,7 +256,7 @@ export const App: React.FC = () => {
       <TechSpecsDrawer
         isOpen={isTechSpecsOpen}
         onClose={() => setIsTechSpecsOpen(false)}
-        llmCalls={results?.llm_calls ?? 0}
+        llmCalls={latestResults?.llm_calls ?? 0}
         threadId={threadId || undefined}
       />
 
@@ -338,76 +346,90 @@ export const App: React.FC = () => {
           </div>
         ) : (
           /* ==================================================================== */
-          /* SCENARIO B: ACTIVE RESULTS STATE (Results & Live Radar take center stage) */
+          /* SCENARIO B: ACTIVE CONVERSATION STATE (Multi-turn chat feed)          */
           /* ==================================================================== */
-          <div className="space-y-6 sm:space-y-8 animate-in fade-in duration-300">
+          <div className="space-y-8 animate-in fade-in duration-300">
 
-            {/* Top Toolbar: Plan Another Trip / New Search */}
+            {/* Top Toolbar */}
             <div className="flex items-center justify-between gap-4 pb-1">
               <button
                 type="button"
                 onClick={handleResetTrip}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-slate-900/90 hover:bg-slate-850 text-xs font-semibold text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 transition shadow-sm"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-900/90 hover:bg-slate-800 text-xs font-semibold text-slate-300 hover:text-white border border-slate-800 hover:border-slate-700 transition shadow-sm"
               >
-                <ArrowLeft className="h-3.5 w-3.5" />
-                <span>Plan Another Trip</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleResetTrip}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-2xl bg-slate-900/90 hover:bg-slate-850 text-xs font-semibold text-blue-400 hover:text-blue-300 border border-slate-800 hover:border-slate-700 transition"
-              >
-                <PlusCircle className="h-3.5 w-3.5" />
-                <span>New Search</span>
+                <PlusCircle className="h-3.5 w-3.5 text-blue-400" />
+                <span>New Trip</span>
               </button>
             </div>
 
-            {/* Prominent User Prompt & Refinement History Card */}
-            <UserQueryCard
-              initialQuery={initialQuery || activeQuery}
-              refinements={refinements}
-            />
+            {/* Conversation Messages Feed */}
+            <div className="space-y-8 max-w-5xl mx-auto w-full">
+              {messages.map((message, index) => {
+                if (message.role === 'user') {
+                  return (
+                    <UserMessageCard
+                      key={message.id}
+                      content={message.content}
+                      timestamp={message.timestamp}
+                    />
+                  );
+                }
 
-            {/* Error Alert Card */}
-            {error && (
-              <div className="max-w-4xl mx-auto w-full p-5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-start gap-3 shadow-lg">
-                <ShieldAlert className="h-5 w-5 text-rose-400 flex-shrink-0 mt-0.5" />
-                <div className="flex-1 text-xs sm:text-sm">
-                  <div className="font-semibold text-rose-200 mb-0.5">Planning Request Interrupted</div>
-                  <p className="text-rose-300/90 leading-relaxed">{error}</p>
-                  <button
-                    type="button"
-                    onClick={() => handlePlanTrip(activeQuery)}
-                    className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-xs font-semibold text-rose-200 border border-rose-500/30 transition"
-                  >
-                    <RefreshCw className="h-3 w-3" />
-                    <span>Retry Request</span>
-                  </button>
+                // Assistant Message: identify the preceding user query and initial query
+                const precedingUserQuery = messages
+                  .slice(0, index)
+                  .reverse()
+                  .find(m => m.role === 'user')?.content || message.content;
+                const initialQuery = messages.find(m => m.role === 'user')?.content || precedingUserQuery;
+
+                return (
+                  <AssistantMessageCard
+                    key={message.id}
+                    content={message.content}
+                    data={message.data}
+                    query={precedingUserQuery}
+                    baseQuery={initialQuery}
+                    timestamp={message.timestamp}
+                    onOpenSpecs={() => setIsTechSpecsOpen(true)}
+                  />
+                );
+              })}
+
+              {/* Live Planning Radar while generating */}
+              {isProcessing && (
+                <div className="animate-in fade-in duration-300">
+                  <PlanningRadar
+                    tasks={tasks}
+                    isProcessing={isProcessing}
+                  />
                 </div>
-              </div>
-            )}
+              )}
 
-            {/* Live Planning Radar */}
-            <div className="max-w-5xl mx-auto w-full">
-              <PlanningRadar
-                tasks={tasks}
-                isProcessing={isProcessing}
-                onOpenSpecs={() => setIsTechSpecsOpen(true)}
-              />
+              {/* Error Alert Card */}
+              {error && (
+                <div className="p-5 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-start gap-3 shadow-lg">
+                  <ShieldAlert className="h-5 w-5 text-rose-400 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1 text-xs sm:text-sm">
+                    <div className="font-semibold text-rose-200 mb-0.5">Planning Request Interrupted</div>
+                    <p className="text-rose-300/90 leading-relaxed">{error}</p>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
+                        if (lastUserMsg) handlePlanTrip(lastUserMsg.content);
+                      }}
+                      className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-xs font-semibold text-rose-200 border border-rose-500/30 transition"
+                    >
+                      <RefreshCw className="h-3 w-3" />
+                      <span>Retry Request</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Auto-scroll anchor */}
+              <div ref={chatBottomRef} />
             </div>
-
-            {/* Results Section */}
-            {results && (
-              <div ref={resultsRef} className="max-w-5xl mx-auto w-full pt-2">
-                <ResultsViewer
-                  data={results}
-                  query={activeQuery}
-                  baseQuery={initialQuery}
-                  onOpenSpecs={() => setIsTechSpecsOpen(true)}
-                />
-              </div>
-            )}
 
           </div>
         )}
@@ -415,7 +437,7 @@ export const App: React.FC = () => {
       </main>
 
       {/* ==================================================================== */}
-      {/* FLOATING BOTTOM CHAT DOCK (Always available when results are active) */}
+      {/* FLOATING BOTTOM CHAT DOCK (Always available when conversation is active) */}
       {/* ==================================================================== */}
       {hasStarted && (
         <div className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 w-full max-w-3xl px-4 z-40 animate-in slide-in-from-bottom-6 duration-300">
@@ -429,7 +451,7 @@ export const App: React.FC = () => {
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isProcessing}
-              placeholder={isProcessing ? "Searching live travel information..." : "Ask an update... e.g. 'Add a day trip to Hakone on Day 4' or 'Switch to boutique stays under ₹15,000'"}
+              placeholder={isProcessing ? "Searching live travel information..." : "Ask a follow-up question... e.g. 'Add a day trip to Hakone on Day 4' or 'Switch to boutique stays under ₹15,000'"}
               className="flex-1 bg-transparent px-3 py-1.5 text-xs sm:text-sm text-slate-100 placeholder:text-slate-400 focus:outline-none"
             />
 
@@ -443,7 +465,7 @@ export const App: React.FC = () => {
               ) : (
                 <>
                   <Send className="h-4 w-4 sm:mr-1.5" />
-                  <span className="hidden sm:inline">Refine</span>
+                  <span className="hidden sm:inline">Send</span>
                 </>
               )}
             </button>

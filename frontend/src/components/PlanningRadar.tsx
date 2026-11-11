@@ -5,13 +5,11 @@ import { PlannerTask } from '../types';
 interface PlanningRadarProps {
   tasks: PlannerTask[];
   isProcessing: boolean;
-  onOpenSpecs?: () => void;
 }
 
 export const PlanningRadar: React.FC<PlanningRadarProps> = ({
   tasks,
   isProcessing,
-  onOpenSpecs,
 }) => {
   const getIcon = (type: PlannerTask['icon']) => {
     switch (type) {
@@ -58,20 +56,11 @@ export const PlanningRadar: React.FC<PlanningRadarProps> = ({
           </p>
         </div>
 
-        {/* Progress pill & Tech specs button */}
-        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-between sm:justify-end">
+        {/* Progress pill */}
+        <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
           <div className="text-xs font-semibold px-3 py-1 rounded-full bg-slate-800/80 text-blue-300 border border-slate-700/60">
             {progressPercent}% Complete
           </div>
-          {onOpenSpecs && (
-            <button
-              type="button"
-              onClick={onOpenSpecs}
-              className="text-[11px] font-medium text-slate-400 hover:text-white px-2.5 py-1 rounded-lg hover:bg-slate-800 transition border border-transparent hover:border-slate-700"
-            >
-              Specs
-            </button>
-          )}
         </div>
       </div>
 

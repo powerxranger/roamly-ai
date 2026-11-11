@@ -409,15 +409,12 @@ export const FlightBoard: React.FC<FlightBoardProps> = ({ flights, destination }
           </div>
         )}
 
-        {/* Boarding Pass Barcode Simulation */}
-        <div className="mt-6 pt-6 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4 text-slate-500 text-xs font-mono">
-          <div className="flex items-center gap-1 tracking-widest text-[10px] opacity-70">
-            ||||| | |||| || |||||| | ||||| ||| ||||||| | || ||||
-          </div>
+        {/* Action / Detail Toggle */}
+        <div className="mt-6 pt-5 border-t border-slate-800 flex items-center justify-end">
           <button
             type="button"
             onClick={() => setShowRaw(!showRaw)}
-            className="flex items-center gap-1 text-slate-400 hover:text-white transition font-sans text-xs"
+            className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-white transition px-3 py-1.5 rounded-xl bg-slate-950/80 border border-slate-800"
           >
             <span>{showRaw ? 'Hide Raw Transit Notes' : 'View Full Scout Notes'}</span>
             {showRaw ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}

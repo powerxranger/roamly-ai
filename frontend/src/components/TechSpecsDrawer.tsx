@@ -170,7 +170,7 @@ export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
               </li>
               <li className="flex items-start gap-2 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/60">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 mt-1.5 flex-shrink-0" />
-                <span><strong>Token Truncation & 429 Handling:</strong> Pre-summarizes 8k+ search snippets to 2k tokens to respect strict Groq TPM thresholds.</span>
+                <span><strong>Full-Fidelity Context Passing:</strong> Delivers untruncated live search results and full daily schedules across agents with zero artificial character limits.</span>
               </li>
             </ul>
           </div>
