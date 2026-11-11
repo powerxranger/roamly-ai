@@ -93,12 +93,12 @@ HOTEL_STRUCTURED_PROMPT = """Analyze the real-time accommodation search results 
 Recommend exactly 3 good accommodation options:
 1. One Luxury property (upscale amenities, convenient location)
 2. One Boutique property (local charm, mid-to-high tier)
-3. One Smart Value property (practical, comfortable, well-reviewed budget/mid-range)
+3. One Value property (practical, comfortable, well-reviewed budget or value stay)
 
 Search Context:
 {hotel_data}
 
-Return a list of 3 hotels with accurate name, tier, estimated nightly price_range quoted in Indian Rupees (₹ / INR, e.g. '₹15,000 - ₹25,000/night'), neighborhood location, and up to 4 key amenities. All rates must be in Indian Rupees (₹).
+Return a list of 3 hotels with accurate name, tier ('Luxury', 'Boutique', or 'Value'), estimated nightly price_range quoted in Indian Rupees (₹ / INR, e.g. '₹15,000 - ₹25,000/night'), neighborhood location, and up to 4 key amenities. All rates must be in Indian Rupees (₹).
 """
 
 ITINERARY_STRUCTURED_PROMPT = """Create or refine a structured day-by-day travel itinerary for {destination}.

@@ -476,7 +476,7 @@ export const App: React.FC = () => {
               </a>
             </div>
             <p className="text-[11px] text-slate-600">
-              LangGraph StateGraph • FastMCP • Groq LPU High-Speed Inference
+              LangGraph StateGraph • FastMCP • Gemini Flash & Groq Inference
             </p>
           </div>
         </footer>

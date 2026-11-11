@@ -135,13 +135,28 @@ class HotelOption(BaseModel):
     """Structured accommodation recommendation emitted by Hotel Agent."""
 
     name: str = Field(..., description="Hotel name")
-    tier: Literal["Luxury", "Boutique", "Value", "General"] = Field(
-        default="General", description="Accommodation tier"
+    tier: Literal["Luxury", "Boutique", "Value", "Smart Value", "General"] = Field(
+        default="General", description="Accommodation tier: 'Luxury', 'Boutique', or 'Value'"
     )
     price_range: Optional[str] = Field(default=None, description="Estimated nightly rate in INR, e.g. '₹12,000/night'")
     location: Optional[str] = Field(default=None, description="Neighborhood or area")
     amenities: Optional[list[str]] = Field(default_factory=list, description="Key amenities")
     description: str = Field(default="", description="Hotel summary")
+
+    @field_validator("tier", mode="before")
+    @classmethod
+    def coerce_tier(cls, v):
+        if not v:
+            return "General"
+        v_str = str(v).strip()
+        v_lower = v_str.lower()
+        if "smart" in v_lower or "value" in v_lower or "budget" in v_lower:
+            return "Value"
+        if "boutique" in v_lower:
+            return "Boutique"
+        if "luxury" in v_lower or "upscale" in v_lower:
+            return "Luxury"
+        return v_str if v_str in ("Luxury", "Boutique", "Value", "General") else "General"
 
     @field_validator("amenities", mode="before")
     @classmethod

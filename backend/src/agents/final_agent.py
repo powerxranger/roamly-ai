@@ -6,23 +6,24 @@ from src.agents.prompts import FINAL_STRUCTURED_PROMPT
 from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.models.travel_models import ExecutiveSynthesis
-from src.utils.async_utils import bump_llm_calls, truncate
+from src.utils.async_utils import bump_llm_calls
 from src.utils.plan_builder import assemble_trip_plan
 
 
 def final_agent(state: TravelState):
     destination = state.get("destination") or state.get("user_query", "")
-    origin = state.get("origin") or state.get("intent", {}).get("origin") or ""
+    intent = state.get("intent") or {}
+    origin = state.get("origin") or intent.get("origin") or ""
 
     try:
         structured_llm = get_structured_llm(ExecutiveSynthesis)
         prompt = FINAL_STRUCTURED_PROMPT.format(
             origin=origin or "Departure location",
             destination=destination,
-            flight_results=truncate(state.get("flight_results", ""), 500),
-            hotel_results=truncate(state.get("hotel_results", ""), 500),
-            weather_results=truncate(state.get("weather_results", ""), 300),
-            itinerary=truncate(state.get("itinerary", ""), 600),
+            flight_results=state.get("flight_results", "") or "No transit information available.",
+            hotel_results=state.get("hotel_results", "") or "No accommodation information available.",
+            weather_results=state.get("weather_results", "") or "No weather information available.",
+            itinerary=state.get("itinerary", "") or "No itinerary planned.",
         )
 
         synthesis: ExecutiveSynthesis = structured_llm.invoke([
@@ -52,7 +53,7 @@ def final_agent(state: TravelState):
         hotel_data=state.get("hotel_model"),
         itinerary_data=state.get("itinerary_model"),
         weather_data=state.get("weather_model"),
-        duration_days=state.get("intent", {}).get("duration_days"),
+        duration_days=intent.get("duration_days"),
     )
 
     budget_line = f"- Total Estimated Budget: {synthesis.estimated_budget}\n\n" if synthesis.estimated_budget else ""

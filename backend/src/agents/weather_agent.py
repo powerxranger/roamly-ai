@@ -104,7 +104,7 @@ def weather_agent(state: TravelState):
             structured_llm = get_structured_llm(WeatherPlan)
             prompt = WEATHER_STRUCTURED_PROMPT.format(
                 destination=city,
-                weather_data=truncate(weather_search_results, 1500),
+                weather_data=truncate(weather_search_results, 3000),
             )
 
             weather_plan = structured_llm.invoke([

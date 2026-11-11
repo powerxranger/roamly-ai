@@ -7,7 +7,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from src.config.settings import CORS_ORIGINS, GROQ_API_KEY
+from src.config.settings import (
+    CORS_ORIGINS,
+    GEMINI_API_KEY,
+    GROQ_API_KEY,
+    has_llm_key,
+)
 from src.graph.runner import arun_travel_agent, run_travel_agent
 
 # This is to allow nested event loops for async calls in FastAPI
@@ -54,19 +59,33 @@ async def root():
 @app.get("/api/config")
 async def read_config():
     """Report credential status based on .env configuration."""
-    is_ready = bool(GROQ_API_KEY)
+    is_ready = has_llm_key()
+    configured_providers = []
+    if GEMINI_API_KEY:
+        configured_providers.append("Gemini")
+    if GROQ_API_KEY:
+        configured_providers.append("Groq")
+
     return JSONResponse(
         content={
             "ready": is_ready,
-            "missing": [] if is_ready else ["GROQ_API_KEY"],
+            "configured_providers": configured_providers,
+            "missing": [] if is_ready else ["GEMINI_API_KEY or GROQ_API_KEY"],
             "credentials": {
+                "GEMINI_API_KEY": {
+                    "label": "Google Gemini API key (Primary)",
+                    "hint": "Primary model: gemini-3.8-flash with 1500 free requests/day.",
+                    "placeholder": "AIzaSy...",
+                    "configured": bool(GEMINI_API_KEY),
+                    "source": "env" if GEMINI_API_KEY else None,
+                },
                 "GROQ_API_KEY": {
-                    "label": "Groq API key",
-                    "hint": "Powers every agent. Configured in .env file.",
+                    "label": "Groq API key (Fallback)",
+                    "hint": "Fallback: open-source model fallback.",
                     "placeholder": "gsk_...",
-                    "configured": is_ready,
-                    "source": "env" if is_ready else None,
-                }
+                    "configured": bool(GROQ_API_KEY),
+                    "source": "env" if GROQ_API_KEY else None,
+                },
             },
         }
     )
@@ -74,12 +93,12 @@ async def read_config():
 
 @app.api_route("/health", methods=["GET", "HEAD"])
 async def health_check():
-    is_ready = bool(GROQ_API_KEY)
+    is_ready = has_llm_key()
     return {
         "status": "ok",
         "message": "AI Travel Planner API is running",
         "ready": is_ready,
-        "missing": [] if is_ready else ["GROQ_API_KEY"],
+        "missing": [] if is_ready else ["GEMINI_API_KEY or GROQ_API_KEY"],
     }
 
 

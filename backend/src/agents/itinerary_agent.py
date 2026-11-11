@@ -36,7 +36,7 @@ def itinerary_agent(state: TravelState):
         try:
             search_query = f"how many days to visit {destination} recommended itinerary duration travel guide"
             search_res = run_async(tavily_mcp_search(search_query))
-            duration_context = truncate(search_res, 1000)
+            duration_context = truncate(search_res, 4000)
         except Exception:
             duration_context = ""
 
@@ -50,9 +50,9 @@ def itinerary_agent(state: TravelState):
             destination=destination,
             requested_duration=duration_label,
             duration_context=duration_context,
-            flight_results=truncate(state.get("flight_results", ""), 600),
-            hotel_results=truncate(state.get("hotel_results", ""), 600),
-            weather_results=truncate(state.get("weather_results", ""), 400),
+            flight_results=state.get("flight_results", "") or "Direct regional transit.",
+            hotel_results=state.get("hotel_results", "") or "Standard accommodations.",
+            weather_results=state.get("weather_results", "") or "Seasonal climate.",
             refinement_context=refinement_context or "Initial planning.",
         )
 

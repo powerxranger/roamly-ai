@@ -3,14 +3,21 @@
 import uuid
 from langchain_core.messages import HumanMessage
 
-from src.config.settings import get_groq_api_key
+from src.config.settings import has_llm_key
 from src.graph.graph import get_travel_graph
 from src.graph.state import initial_state
 
 
+def _verify_llm_configured():
+    if not has_llm_key():
+        raise ValueError(
+            "No LLM API keys found. Please set GEMINI_API_KEY or GROQ_API_KEY in your .env file."
+        )
+
+
 async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> dict:
     """Async entry point running graph nodes in parallel."""
-    get_groq_api_key()
+    _verify_llm_configured()
 
     if not thread_id:
         thread_id = f"user_{uuid.uuid4().hex}"
@@ -78,7 +85,7 @@ async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> di
 
 
 def run_travel_agent(user_input: str, thread_id: str | None = None) -> dict:
-    get_groq_api_key()
+    _verify_llm_configured()
 
     if not thread_id:
         thread_id = f"user_{uuid.uuid4().hex}"

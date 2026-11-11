@@ -23,7 +23,11 @@ def bump_llm_calls(state: dict | None = None, count: int = 1) -> int:
     return count
 
 
-def truncate(value: Any, limit: int) -> str:
-    """Stringify a tool payload and clip it so prompts stay within budget."""
-
-    return str(value)[:limit]
+def truncate(value: Any, limit: int = 5000) -> str:
+    """Stringify a tool payload and clip it only if it exceeds safety limit."""
+    if value is None:
+        return ""
+    text = str(value)
+    if limit and len(text) > limit:
+        return text[:limit]
+    return text

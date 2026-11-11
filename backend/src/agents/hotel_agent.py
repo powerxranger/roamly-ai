@@ -25,7 +25,7 @@ def hotel_agent(state: TravelState):
     try:
         search_query = f"best hotels accommodations in {destination} luxury boutique rates INR rupees per night"
         hotel_search_results = run_async(tavily_mcp_search(search_query))
-        search_context = truncate(hotel_search_results, 1500)
+        search_context = truncate(hotel_search_results, 4000)
     except Exception as search_err:
         print(f"[HotelAgent] Live web search unavailable ({search_err}). Falling back to model accommodation knowledge...")
         search_context = f"Top accommodations, luxury stays, and boutique hotels in {destination}."

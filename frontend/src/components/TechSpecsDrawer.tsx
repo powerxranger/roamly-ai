@@ -93,7 +93,7 @@ export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
                 <span>Inference Engine</span>
               </div>
               <div className="text-sm font-bold text-white truncate">
-                Groq GPT-OSS-120B
+                Google Gemini Flash & Groq Fallback
               </div>
             </div>
           </div>

@@ -29,7 +29,7 @@ def flight_agent(state: TravelState):
         else:
             search_query = f"how to reach {destination} nearest airport flights train bus road distance duration INR rupees"
         flight_search_results = run_async(tavily_mcp_search(search_query))
-        search_context = truncate(flight_search_results, 1500)
+        search_context = truncate(flight_search_results, 4000)
     except Exception as search_err:
         print(f"[FlightAgent] Live web search unavailable ({search_err}). Falling back to model transit intelligence...")
         search_context = f"Direct and regional transit options connecting {origin or 'origin'} and {destination}."
