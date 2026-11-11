@@ -1,0 +1,12 @@
+fastapi>=0.141.1
+uvicorn>=0.52.4
+langchain>=1.3.17
+langgraph>=1.2.11
+langchain-google-genai>=4.4.3
+langchain-groq>=1.1.3
+langchain-mcp-adapters>=0.3.2
+mcp>=1.29.1
+tavily>=1.1.0
+requests>=2.34.2
+python-dotenv>=1.2.3
+certifi>=2024.0.0
