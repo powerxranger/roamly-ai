@@ -412,6 +412,7 @@ class TestPydanticArchitecture(unittest.TestCase):
 
     def test_guardrail_agent_execution(self):
         """Verify guardrail_agent returns conversational response without invoking LLM."""
+        import asyncio
         from src.agents.guardrail_agent import guardrail_agent
 
         state = {
@@ -421,19 +422,20 @@ class TestPydanticArchitecture(unittest.TestCase):
             },
             "user_query": "Can you do my calculus homework?",
         }
-        result = guardrail_agent(state)
+        result = asyncio.run(guardrail_agent(state))
         self.assertEqual(result["response_type"], "conversation")
         self.assertIn("Roamly is dedicated exclusively", result["messages"][0].content)
 
     def test_guardrail_agent_dynamic_fallback(self):
         """Verify guardrail_agent dynamically invokes LLM with zero hardcoded branches."""
-        from unittest.mock import MagicMock, patch
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock, patch
         from src.agents.guardrail_agent import guardrail_agent
 
         mock_llm = MagicMock()
         mock_response = MagicMock()
         mock_response.content = "I specialize in travel planning. Try exploring 5 days in Tokyo!"
-        mock_llm.invoke.return_value = mock_response
+        mock_llm.ainvoke = AsyncMock(return_value=mock_response)
 
         state = {
             "intent": {
@@ -445,7 +447,7 @@ class TestPydanticArchitecture(unittest.TestCase):
         }
 
         with patch("src.agents.guardrail_agent.get_llm", return_value=mock_llm):
-            result = guardrail_agent(state)
+            result = asyncio.run(guardrail_agent(state))
 
         self.assertEqual(result["response_type"], "conversation")
         self.assertIn("Tokyo", result["messages"][0].content)

@@ -6,7 +6,7 @@ from src.agents.prompts import ADVISOR_SYSTEM_PROMPT
 from src.clients.llm import get_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
-from src.utils.async_utils import bump_llm_calls, run_async
+from src.utils.async_utils import bump_llm_calls
 
 
 def _format_itinerary_summary(state: TravelState) -> str:
@@ -28,7 +28,7 @@ def _format_itinerary_summary(state: TravelState) -> str:
     return "No established itinerary yet."
 
 
-def advisor_agent(state: TravelState) -> dict:
+async def advisor_agent(state: TravelState) -> dict:
     user_query = state.get("user_query", "")
     destination = state.get("destination") or "the destination"
     origin = state.get("origin") or "Unspecified"
@@ -38,7 +38,7 @@ def advisor_agent(state: TravelState) -> dict:
     search_context = ""
     try:
         search_query = f"{destination} {user_query} recommendations authentic top spots guide"
-        search_results = run_async(tavily_mcp_search(search_query))
+        search_results = await tavily_mcp_search(search_query)
         search_context = str(search_results) if search_results else ""
     except Exception as search_err:
         print(f"[AdvisorAgent] Live web search unavailable ({search_err}). Falling back to local knowledge...")
@@ -54,7 +54,7 @@ def advisor_agent(state: TravelState) -> dict:
 
     try:
         llm = get_llm()
-        response = llm.invoke([
+        response = await llm.ainvoke([
             SystemMessage(content=f"You are an expert local guide and travel advisor for {destination}."),
             HumanMessage(content=prompt),
         ])

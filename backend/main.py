@@ -13,11 +13,7 @@ from src.config.settings import (
     GROQ_API_KEY,
     has_llm_key,
 )
-from src.graph.runner import arun_travel_agent, run_travel_agent
-
-# This is to allow nested event loops for async calls in FastAPI
-import nest_asyncio
-nest_asyncio.apply()
+from src.graph.runner import arun_travel_agent
 
 
 app = FastAPI(

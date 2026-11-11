@@ -7,10 +7,10 @@ from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import TransitInfo
-from src.utils.async_utils import bump_llm_calls, run_async
+from src.utils.async_utils import bump_llm_calls
 
 
-def flight_agent(state: TravelState):
+async def flight_agent(state: TravelState):
     intent = state.get("intent") or {}
     existing_model = state.get("flight_model")
     existing_flights = state.get("flight_results", "")
@@ -28,7 +28,7 @@ def flight_agent(state: TravelState):
             search_query = f"how to travel from {origin} to {destination} flights train road transit distance duration ticket price"
         else:
             search_query = f"how to reach {destination} nearest airport flights train road transit distance duration"
-        flight_search_results = run_async(tavily_mcp_search(search_query))
+        flight_search_results = await tavily_mcp_search(search_query)
         search_context = str(flight_search_results) if flight_search_results else ""
     except Exception as search_err:
         print(f"[FlightAgent] Live web search unavailable ({search_err}). Falling back to model transit intelligence...")
@@ -42,7 +42,7 @@ def flight_agent(state: TravelState):
             flight_data=search_context,
         )
 
-        flight_info: TransitInfo = structured_llm.invoke([
+        flight_info: TransitInfo = await structured_llm.ainvoke([
             SystemMessage(content="You are an expert travel and transit analyst. Emit strictly structured transit data covering flights, trains, and road options with realistic fares in the relevant local currency."),
             HumanMessage(content=prompt),
         ])

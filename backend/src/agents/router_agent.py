@@ -9,7 +9,7 @@ from src.models.travel_models import TravelIntent
 from src.utils.async_utils import bump_llm_calls
 
 
-def router_agent(state: TravelState) -> dict:
+async def router_agent(state: TravelState) -> dict:
     user_query = state.get("user_query", "")
     existing_dest = state.get("destination", "")
     has_flights = bool(state.get("flight_results"))
@@ -27,7 +27,7 @@ def router_agent(state: TravelState) -> dict:
     try:
         # Structured output backed by Pydantic with native json_schema
         structured_llm = get_structured_llm(TravelIntent)
-        intent: TravelIntent = structured_llm.invoke([
+        intent: TravelIntent = await structured_llm.ainvoke([
             SystemMessage(content="You are a precise JSON travel router."),
             HumanMessage(content=prompt),
         ])

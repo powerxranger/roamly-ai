@@ -12,6 +12,7 @@ from src.config.settings import (
 )
 
 
+@lru_cache(maxsize=1)
 def _build_available_llms() -> list[tuple[str, Any]]:
     """Build list of available (provider_name, chat_model) pairs based on configured API keys."""
     clients: list[tuple[str, Any]] = []
@@ -79,6 +80,7 @@ def get_llm():
     return primary_client
 
 
+@lru_cache(maxsize=16)
 def get_structured_llm(schema):
     """Return a structured output LLM runnable with automatic multi-provider fallbacks."""
     available = _build_available_llms()

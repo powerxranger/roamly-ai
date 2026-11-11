@@ -7,10 +7,10 @@ from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import ItineraryDayPlan, ItineraryPlan
-from src.utils.async_utils import bump_llm_calls, run_async
+from src.utils.async_utils import bump_llm_calls
 
 
-def itinerary_agent(state: TravelState):
+async def itinerary_agent(state: TravelState):
     intent = state.get("intent") or {}
     existing_model = state.get("itinerary_model")
     existing_itinerary = state.get("itinerary", "")
@@ -35,7 +35,7 @@ def itinerary_agent(state: TravelState):
         duration_label = "Unspecified (Determine based on travel guide consensus)"
         try:
             search_query = f"how many days to visit {destination} recommended itinerary duration travel guide"
-            search_res = run_async(tavily_mcp_search(search_query))
+            search_res = await tavily_mcp_search(search_query)
             duration_context = str(search_res) if search_res else ""
         except Exception:
             duration_context = ""
@@ -56,7 +56,7 @@ def itinerary_agent(state: TravelState):
             refinement_context=refinement_context or "Initial planning.",
         )
 
-        result: ItineraryPlan = structured_llm.invoke([
+        result: ItineraryPlan = await structured_llm.ainvoke([
             SystemMessage(content="You are an expert travel planner. Determine the recommended trip length from travel consensus and emit structured day plans."),
             HumanMessage(content=prompt),
         ])

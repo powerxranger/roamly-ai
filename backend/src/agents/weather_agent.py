@@ -10,7 +10,7 @@ from src.graph.state import TravelState
 from src.mcp_servers.local import forecast_mcp_search, weather_mcp_search
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import WeatherPlan
-from src.utils.async_utils import bump_llm_calls, run_async
+from src.utils.async_utils import bump_llm_calls
 
 
 def _parse_weather_data(raw: Any) -> dict:
@@ -43,7 +43,7 @@ def _parse_weather_data(raw: Any) -> dict:
     return {}
 
 
-def weather_agent(state: TravelState):
+async def weather_agent(state: TravelState):
     intent = state.get("intent") or {}
     existing_model = state.get("weather_model")
     existing_weather = state.get("weather_results", "")
@@ -63,11 +63,11 @@ def weather_agent(state: TravelState):
 
     # Step 1: Try local OpenWeather MCP tool first
     try:
-        raw_current = run_async(weather_mcp_search(city))
+        raw_current = await weather_mcp_search(city)
         curr_dict = _parse_weather_data(raw_current)
 
         if "temperature_c" in curr_dict:
-            raw_forecast = run_async(forecast_mcp_search(city))
+            raw_forecast = await forecast_mcp_search(city)
             forecast_dict = _parse_weather_data(raw_forecast)
 
             current_summary = json.dumps(curr_dict, indent=2)
@@ -80,7 +80,7 @@ def weather_agent(state: TravelState):
                 weather_data=weather_data,
             )
 
-            weather_plan = structured_llm.invoke([
+            weather_plan = await structured_llm.ainvoke([
                 SystemMessage(content="You are a helpful travel assistant. Do not invoke external file tools. Provide structured weather and packing data conforming to the schema."),
                 HumanMessage(content=prompt),
             ])
@@ -99,7 +99,7 @@ def weather_agent(state: TravelState):
         try:
             print(f"[WeatherAgent] [Source: Tavily Live Search Fallback] Searching current weather for '{city}'...")
             search_query = f"current weather temperature and forecast in {city} climate conditions"
-            weather_search_results = run_async(tavily_mcp_search(search_query))
+            weather_search_results = await tavily_mcp_search(search_query)
 
             structured_llm = get_structured_llm(WeatherPlan)
             prompt = WEATHER_STRUCTURED_PROMPT.format(
@@ -107,7 +107,7 @@ def weather_agent(state: TravelState):
                 weather_data=str(weather_search_results) if weather_search_results else "No weather data found.",
             )
 
-            weather_plan = structured_llm.invoke([
+            weather_plan = await structured_llm.ainvoke([
                 SystemMessage(content="You are a helpful travel assistant. Do not invoke external file tools. Provide structured weather and packing data conforming to the schema."),
                 HumanMessage(content=prompt),
             ])

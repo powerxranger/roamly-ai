@@ -26,7 +26,7 @@ Guidelines:
 Tone: Friendly, concise, practical. Do not use em dashes."""
 
 
-def guardrail_agent(state: TravelState) -> dict:
+async def guardrail_agent(state: TravelState) -> dict:
     """Returns a dynamically generated conversational boundary or clarification response with zero hardcoding."""
     intent = state.get("intent") or {}
     custom_msg = intent.get("guardrail_message")
@@ -42,7 +42,7 @@ def guardrail_agent(state: TravelState) -> dict:
     user_query = state.get("user_query", "")
     try:
         llm = get_llm()
-        response = llm.invoke([
+        response = await llm.ainvoke([
             SystemMessage(content=GUARDRAIL_SYSTEM_PROMPT),
             HumanMessage(content=user_query),
         ])

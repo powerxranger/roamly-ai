@@ -10,7 +10,7 @@ from src.utils.async_utils import bump_llm_calls
 from src.utils.plan_builder import assemble_trip_plan
 
 
-def final_agent(state: TravelState):
+async def final_agent(state: TravelState):
     destination = state.get("destination") or state.get("user_query", "")
     intent = state.get("intent") or {}
     origin = state.get("origin") or intent.get("origin") or ""
@@ -26,7 +26,7 @@ def final_agent(state: TravelState):
             itinerary=state.get("itinerary", "") or "No itinerary planned.",
         )
 
-        synthesis: ExecutiveSynthesis = structured_llm.invoke([
+        synthesis: ExecutiveSynthesis = await structured_llm.ainvoke([
             SystemMessage(content="You are a helpful travel planner. Emit a clear trip summary and budget quoting amounts in the relevant local or requested currency."),
             HumanMessage(content=prompt),
         ])

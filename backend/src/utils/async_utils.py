@@ -1,23 +1,16 @@
-"""
-Helpers for calling async MCP tools from the synchronous graph nodes.
-
-app.py applies nest_asyncio, which is what makes asyncio.run() safe to
-call from inside FastAPI's already-running event loop.
-"""
+"""Async utility helpers for Roamly AI graph execution."""
 
 import asyncio
-from typing import Any, Awaitable, TypeVar
+from typing import Awaitable, TypeVar
 
 T = TypeVar("T")
 
 
 def run_async(coroutine: Awaitable[T]) -> T:
-    """Run a coroutine to completion from synchronous code."""
-
+    """Run a coroutine to completion from synchronous code (legacy helper)."""
     return asyncio.run(coroutine)
 
 
 def bump_llm_calls(state: dict | None = None, count: int = 1) -> int:
     """Return the incremental LLM call count for the operator.add reducer."""
-
     return count
