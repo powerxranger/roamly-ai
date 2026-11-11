@@ -23,6 +23,11 @@ Guidelines:
    - Recommend 2 to 3 distinct destinations matching their implied vibe or season.
    - Invite them to pick one or name their departure city so you can build their full itinerary.
 
+4. If the user specified a destination but did not mention where they are traveling from (e.g. 'Plan a trip to Boston'):
+   - Acknowledge the destination warmly.
+   - Ask for their departure city (or whether they are already in the destination city).
+   - Explain that their departure point determines transit options, travel time, Day 1 arrival logistics, and jet lag pacing.
+
 Tone: Friendly, concise, practical. Do not use em dashes."""
 
 
@@ -31,14 +36,14 @@ async def guardrail_agent(state: TravelState) -> dict:
     intent = state.get("intent") or {}
     custom_msg = intent.get("guardrail_message")
 
-    # If the semantic router already generated a high-quality tailored message, use it directly
-    if custom_msg and len(custom_msg.strip()) > 15:
+    # If the semantic router already generated a tailored message, use it directly
+    if custom_msg and custom_msg.strip():
         return {
             "messages": [AIMessage(content=custom_msg.strip())],
             "response_type": "conversation",
         }
 
-    # Otherwise, dynamically generate via LLM with zero hardcoded branches
+    # Otherwise, dynamically generate via LLM with zero hardcoded templates
     user_query = state.get("user_query", "")
     try:
         llm = get_llm()
@@ -47,13 +52,8 @@ async def guardrail_agent(state: TravelState) -> dict:
             HumanMessage(content=user_query),
         ])
         content = response.content if hasattr(response, "content") else str(response)
-    except Exception:
-        content = (
-            "I am Roamly, an AI travel planner. I specialize in building custom day-by-day itineraries, "
-            "scouting transit and accommodations, and finding top local spots.\n\n"
-            "Tell me where you would like to travel or the kind of trip you have in mind, "
-            "and I will map out the complete journey for you."
-        )
+    except Exception as e:
+        raise RuntimeError(f"GuardrailAgent failed to process query '{user_query}': {e}") from e
 
     return {
         "messages": [AIMessage(content=content)],

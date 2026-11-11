@@ -55,6 +55,6 @@ async def weather_mcp_search(city: str):
 
 
 async def forecast_mcp_search(city: str):
-    """Multi-day forecast for the given city."""
+    """Multi-day forecast for the given city from OpenWeather MCP."""
     tools = await _get_weather_tools()
     return await tools[FORECAST_TOOL].ainvoke({"city": city})

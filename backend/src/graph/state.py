@@ -18,11 +18,16 @@ class TravelState(TypedDict, total=False):
     # Structured Pydantic state (Zero regex / string scraping)
     destination: str
     origin: str
+    travel_dates: Optional[str]
     intent: Optional[dict[str, Any]]
     flight_model: Optional[dict[str, Any]]
     hotel_model: Optional[list[dict[str, Any]]]
     itinerary_model: Optional[list[dict[str, Any]]]
     weather_model: Optional[dict[str, Any]]
+    trip_summary: Optional[str]
+    estimated_budget: Optional[str]
+    recommendations: Optional[list[str]]
+    refinement_prompts: Optional[list[str]]
     plan: Optional[dict[str, Any]]
     followup_history: list[str]
     response_type: Optional[str]
@@ -40,11 +45,16 @@ def initial_state(user_query: str) -> TravelState:
         "llm_calls": 0,
         "destination": "",
         "origin": "",
+        "travel_dates": None,
         "intent": None,
         "flight_model": None,
         "hotel_model": None,
         "itinerary_model": None,
         "weather_model": None,
+        "trip_summary": "",
+        "estimated_budget": "",
+        "recommendations": [],
+        "refinement_prompts": [],
         "plan": None,
         "followup_history": [],
         "response_type": "plan",

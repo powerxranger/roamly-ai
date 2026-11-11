@@ -12,11 +12,13 @@ You describe your travel desires in natural language:
 > *"Plan a 7-day trip to Tokyo and Kyoto in late October for two people, mid-range budget, interested in food and temples"*
 
 A team of specialized agents handles the research:
-- ✈️ **Flights Agent**: Identifies departure/arrival airports, airlines serving routes, typical durations, and fare estimates.
-- 🏨 **Hotel Agent**: Discovers accommodations matching your destination and budget parameters.
-- 🌤️ **Weather Agent**: Gathers current conditions and forecasts to provide packing and season tips.
-- 🗺️ **Itinerary Agent**: Creates realistic, day-by-day schedules with activity suggestions.
-- 📋 **Final Synthesis Agent**: Blends all findings into a cohesive, structured travel plan.
+- 🧭 **Router Agent**: Analyzes travel intent, pre-formulates search queries, and selects the ideal execution path.
+- 🛡️ **Guardrail Agent**: Intercepts out-of-scope queries and asks clarifying questions for ambiguous requests (e.g. missing origins).
+- 💡 **Local Advisor Agent**: Fast 1-hop local recommendations and travel Q&A grounded in active itinerary context without full pipeline re-runs.
+- ✈️ **Transit Agent**: Identifies multi-modal transit options across air, rail, and driving with fare ranges and route logistics.
+- 🏨 **Hotel Agent**: Discovers accommodations matching destination, style, and budget parameters.
+- 🌤️ **Weather Agent**: FastMCP-powered meteorological forecasts and climate-grounded packing tips.
+- 🗺️ **Itinerary Agent**: Creates realistic daily schedules and directly synthesizes the complete, structured `TripPlan`.
 
 ---
 
@@ -27,9 +29,9 @@ A team of specialized agents handles the research:
 - **Python >= 3.11**
 - **[uv](https://docs.astral.sh/uv/)** (recommended package manager)
 - **API Keys**:
-  - [Groq](https://console.groq.com/) (LLM inference)
-  - [Tavily](https://tavily.com/) (Web search for flights and hotels)
-  - [OpenWeather](https://openweathermap.org/api) (Weather & forecasts)
+  - [Google Gemini](https://aistudio.google.com/) (Primary LLM: gemini-3.8-flash) or [Groq](https://console.groq.com/) (Fallback LLM: llama-3.3-70b-versatile)
+  - [Tavily](https://tavily.com/) (Web search for transit and hotels)
+  - [OpenWeather](https://openweathermap.org/api) (Multi-day weather forecasts)
 
 ### Quick Start
 
@@ -68,10 +70,14 @@ docker compose up -d
 ## 🛠️ Architecture
 
 - **Backend**: FastAPI, LangGraph, LangChain, FastMCP (Model Context Protocol)
-- **Agent Orchestration**: Parallel fan-out / barrier fan-in graph (`START -> [flight_agent, hotel_agent, weather_agent] -> itinerary_agent -> final_agent -> END`)
-- **LLM Engine**: Groq (high-speed inference with `llama-3.3-70b-versatile`)
+- **Agent Orchestration**: Dynamic 3-path state machine:
+  - Path 1: Guardrail short-circuit (`router_agent -> guardrail_agent -> END`)
+  - Path 2: Fast advisor (`router_agent -> advisor_agent -> END`)
+  - Path 3: Planning research fan-out (`router_agent -> scout_fanout -> [flight_agent, hotel_agent, weather_agent] -> itinerary_agent -> END`)
+- **LLM Engine**: Multi-provider with Google Gemini (`gemini-3.8-flash`) as primary and Groq (`llama-3.3-70b-versatile`) as automated fallback
 - **Data Integrations**:
-  - Live Flights & Hotels: Tavily Search MCP
-  - Weather & Forecasts: Custom OpenWeather FastMCP server
+  - Live Transit & Hotels: Tavily Search MCP
+  - Weather & Forecasts: Custom OpenWeather FastMCP stdio server
+- **Cost & Latency Optimization**: Streamlined scout execution with pre-formulated search queries (5 LLM calls per planning request)
 - **State & Memory**: In-memory thread checkpointer (`MemorySaver`) via LangGraph
 - **Frontend**: Modern React (Vite + TypeScript + Tailwind CSS) with live agent execution pipeline visualization, tabbed travel breakdown, and decoupled deployment (Vercel + Render)

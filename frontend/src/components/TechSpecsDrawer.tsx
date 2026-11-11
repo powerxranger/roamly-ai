@@ -24,7 +24,8 @@ export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
 • Concurrency: Concurrent async tasks for FlightAgent, HotelAgent, WeatherAgent
 • State Reducers: Annotated[int, operator.add] for collision-free call counting
 • MCP Architecture: Hybrid (Remote Streamable HTTP MCP via Tavily + Local Stdio FastMCP subprocess for Weather)
-• Inference: Groq LPU high-speed inference (openai/gpt-oss-120b)
+• Inference: Google Gemini (gemini-3.8-flash) with Groq LPU fallback
+• Zero Hardcoding: Fully dynamic Pydantic schema contracts, zero regex, zero static heuristics
 • Backend: FastAPI with nest_asyncio & CORS
 • Frontend: React 18, TypeScript, Tailwind CSS, Vite (Decoupled Vercel + Render)`;
 
@@ -154,12 +155,7 @@ export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
 
               <div className="flex items-center gap-2 text-indigo-400 font-semibold pt-1">
                 <GitFork className="h-3.5 w-3.5 rotate-180" />
-                <span>Fan-In Barrier: itinerary_agent</span>
-              </div>
-
-              <div className="flex items-center gap-2 text-sky-400 font-semibold">
-                <Server className="h-3.5 w-3.5" />
-                <span>Synthesis Node: final_agent (Structured TripPlan) ➔ END</span>
+                <span>Fan-In Barrier: itinerary_agent (Itinerary & TripPlan Synthesis) ➔ END</span>
               </div>
             </div>
           </div>

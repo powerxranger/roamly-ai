@@ -46,10 +46,9 @@ def _parse_weather_data(raw: Any) -> dict:
 async def weather_agent(state: TravelState):
     intent = state.get("intent") or {}
     existing_model = state.get("weather_model")
-    existing_weather = state.get("weather_results", "")
 
     # Skip scouting if semantic supervisor determined climate intel is not needed
-    if existing_weather and not intent.get("needs_weather", True):
+    if not intent.get("needs_weather", True):
         return {}
 
     destination = state.get("destination") or state.get("user_query", "")
@@ -57,78 +56,111 @@ async def weather_agent(state: TravelState):
     if not city:
         raise RuntimeError("WeatherAgent requires a destination or primary city to retrieve weather data.")
 
-    weather_plan = None
+    timeline = intent.get("travel_dates") or state.get("travel_dates") or ""
+    weather_data = ""
     weather_source = "openweather"
-    llm_calls_made = 0
 
-    # Step 1: Try local OpenWeather MCP tool first
+    # Step 1: Query local OpenWeather FastMCP tool for multi-day meteorological forecast
     try:
-        raw_current = await weather_mcp_search(city)
-        curr_dict = _parse_weather_data(raw_current)
+        raw_forecast = await forecast_mcp_search(city)
+        forecast_dict = _parse_weather_data(raw_forecast)
+        daily_items = forecast_dict.get("daily_forecast") or forecast_dict.get("forecast") or []
 
-        if "temperature_c" in curr_dict:
-            raw_forecast = await forecast_mcp_search(city)
-            forecast_dict = _parse_weather_data(raw_forecast)
+        if daily_items and isinstance(daily_items, list):
+            day_lines = []
+            for d in daily_items:
+                if isinstance(d, dict):
+                    day_label = f"{d.get('date', '')} ({d.get('day', '')})".strip()
+                    temp_high = d.get("temp_max") or d.get("temperature", "")
+                    temp_low = d.get("temp_min", "")
+                    cond = d.get("weather") or d.get("condition", "Clear")
+                    hum = d.get("humidity", "")
+                    rain_p = d.get("rain_probability", "")
 
-            current_summary = json.dumps(curr_dict, indent=2)
-            forecast_summary = json.dumps(forecast_dict.get("forecast", forecast_dict), indent=2)
-            weather_data = f"Current Observations:\n{current_summary}\n\nUpcoming Forecast:\n{forecast_summary}"
+                    line_parts = [day_label]
+                    if temp_high != "":
+                        line_parts.append(f"Daytime: {temp_high}°C")
+                    if temp_low != "":
+                        line_parts.append(f"Low: {temp_low}°C")
+                    line_parts.append(f"Conditions: {cond}")
+                    if hum != "":
+                        line_parts.append(f"Humidity: {hum}%")
+                    if rain_p != "":
+                        line_parts.append(f"Rain Probability: {rain_p}%")
+                    day_lines.append(" - " + ", ".join(line_parts))
 
-            structured_llm = get_structured_llm(WeatherPlan)
-            prompt = WEATHER_STRUCTURED_PROMPT.format(
-                destination=city,
-                weather_data=weather_data,
-            )
-
-            weather_plan = await structured_llm.ainvoke([
-                SystemMessage(content="You are a helpful travel assistant. Do not invoke external file tools. Provide structured weather and packing data conforming to the schema."),
-                HumanMessage(content=prompt),
-            ])
-            weather_plan.source = "openweather"
+            timeline_header = f"Timeline: {timeline}" if timeline else "Upcoming trip window"
+            weather_data = f"OpenWeather Multi-Day Forecast for {city} ({timeline_header}):\n" + "\n".join(day_lines)
             weather_source = "openweather"
-            llm_calls_made = 1
-            print(f"[WeatherAgent] [Source: OpenWeather MCP] Retrieved and analyzed climate data for '{city}': {weather_plan.temperature}, {weather_plan.current_conditions}")
-        else:
-            print(f"[WeatherAgent] OpenWeather MCP returned no temperature data for '{city}'. Attempting fallback...")
+            print(f"[WeatherAgent] [Source: OpenWeather MCP] Retrieved multi-day forecast for '{city}' ({len(daily_items)} days).")
+
+        # If forecast had no daily items, try current weather
+        if not weather_data:
+            raw_current = await weather_mcp_search(city)
+            curr_dict = _parse_weather_data(raw_current)
+            if "temperature_c" in curr_dict:
+                weather_data = (
+                    f"Current Meteorological Readings from OpenWeather for {city}:\n"
+                    f"- Temperature: {curr_dict.get('temperature_c')}°C\n"
+                    f"- Atmospheric Condition: {curr_dict.get('condition')}\n"
+                    f"- Humidity: {curr_dict.get('humidity')}%\n"
+                    f"- Wind Speed: {curr_dict.get('wind_speed', 'N/A')} m/s"
+                )
+                weather_source = "openweather"
     except Exception as e:
-        print(f"[WeatherAgent] OpenWeather MCP error for '{city}': {e}. Attempting fallback...")
-        weather_plan = None
+        print(f"[WeatherAgent] OpenWeather MCP forecast error for '{city}': {e}. Attempting web search fallback...")
 
-    # Step 2: If OpenWeather is unavailable or failed, scout live weather via Tavily web search
-    if weather_plan is None:
+    # Step 2: Fallback to Tavily web search only if OpenWeather returned no data
+    if not weather_data:
         try:
-            print(f"[WeatherAgent] [Source: Tavily Live Search Fallback] Searching current weather for '{city}'...")
-            search_query = f"current weather temperature and forecast in {city} climate conditions"
+            print(f"[WeatherAgent] [Source: Tavily Live Search Fallback] Searching weather for '{city}' ({timeline or 'upcoming'})...")
+            search_query = f"weather in {city} {timeline or 'forecast climate'} temperature rainfall packing"
             weather_search_results = await tavily_mcp_search(search_query)
-
-            structured_llm = get_structured_llm(WeatherPlan)
-            prompt = WEATHER_STRUCTURED_PROMPT.format(
-                destination=city,
-                weather_data=str(weather_search_results) if weather_search_results else "No weather data found.",
-            )
-
-            weather_plan = await structured_llm.ainvoke([
-                SystemMessage(content="You are a helpful travel assistant. Do not invoke external file tools. Provide structured weather and packing data conforming to the schema."),
-                HumanMessage(content=prompt),
-            ])
-            weather_plan.source = "live_search"
+            weather_data = str(weather_search_results) if weather_search_results else f"Seasonal climate and forecast for {city}."
             weather_source = "live_search"
-            llm_calls_made = 1
-            print(f"[WeatherAgent] [Source: Tavily Live Search Fallback] Successfully retrieved weather for '{city}': {weather_plan.temperature}, {weather_plan.current_conditions}")
-
         except Exception as e:
             if existing_model:
                 weather_plan = WeatherPlan(**existing_model)
-            else:
-                raise RuntimeError(f"WeatherAgent failed to retrieve weather data for '{city}': {e}") from e
+                model_dict = weather_plan.model_dump()
+                return {
+                    "weather_model": model_dict,
+                    "weather_results": state.get("weather_results", ""),
+                    "messages": [AIMessage(content="Preserved existing weather data.")],
+                    "llm_calls": bump_llm_calls(state, 0),
+                }
+            raise RuntimeError(f"WeatherAgent failed to retrieve weather data for '{city}': {e}") from e
+
+    # Single structured LLM call to build the WeatherPlan
+    try:
+        structured_llm = get_structured_llm(WeatherPlan)
+        prompt = WEATHER_STRUCTURED_PROMPT.format(
+            destination=city,
+            travel_timeline=timeline or "Upcoming trip duration",
+            weather_data=weather_data,
+        )
+
+        weather_plan: WeatherPlan = await structured_llm.ainvoke([
+            SystemMessage(content="You are an expert travel assistant. Analyze the meteorological data and emit structured climate metrics and tailored packing recommendations for the specified timeline."),
+            HumanMessage(content=prompt),
+        ])
+        weather_plan.timeline = timeline or None
+        weather_plan.source = weather_source
+
+    except Exception as e:
+        if existing_model:
+            weather_plan = WeatherPlan(**existing_model)
+        else:
+            raise RuntimeError(f"WeatherAgent failed to structure weather plan for '{city}': {e}") from e
 
     model_dict = weather_plan.model_dump()
-    source_label = "OpenWeather API" if weather_source == "openweather" else "Live Web Search (Tavily)"
+    source_label = "OpenWeather API" if "openweather" in weather_source else "Live Web Search (Tavily)"
+    timeline_header = f"Travel Timeline: {timeline}\n" if timeline else ""
     formatted_text = (
         f"Data Source: {source_label}\n"
-        f"Current Conditions: {weather_plan.current_conditions}\n"
+        f"{timeline_header}"
+        f"Conditions: {weather_plan.current_conditions}\n"
         f"Temperature: {weather_plan.temperature}\n"
-        f"Forecast: {weather_plan.forecast_summary}\n\n"
+        f"Forecast Outlook: {weather_plan.forecast_summary}\n\n"
         f"Packing Essentials:\n" +
         "\n".join(f"- {p}" for p in weather_plan.packing_list)
     )
@@ -139,5 +171,5 @@ async def weather_agent(state: TravelState):
         "messages": [
             AIMessage(content=f"Weather intelligence fetched via {source_label}")
         ],
-        "llm_calls": bump_llm_calls(state, llm_calls_made),
+        "llm_calls": bump_llm_calls(state),
     }

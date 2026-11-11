@@ -44,19 +44,11 @@ const INITIAL_PLANNING_TASKS: PlannerTask[] = [
   },
   {
     id: 'journey_architect',
-    label: 'Itinerary Planner',
-    sublabel: 'Building day-by-day schedules and activities',
+    label: 'Itinerary & Trip Plan',
+    sublabel: 'Building day-by-day schedules, overview, and estimated budget',
     icon: 'itinerary',
     status: 'pending',
     technicalRole: 'LangGraph Barrier Fan-In',
-  },
-  {
-    id: 'trip_summary',
-    label: 'Trip Summary',
-    sublabel: 'Organizing your travel plan and estimated budget',
-    icon: 'synthesis',
-    status: 'pending',
-    technicalRole: 'Overview & State Reducer',
   },
 ];
 
@@ -198,7 +190,6 @@ export const App: React.FC = () => {
         { ...INITIAL_PLANNING_TASKS[1], status: 'in_progress' },
         { ...INITIAL_PLANNING_TASKS[2], status: 'in_progress' },
         { ...INITIAL_PLANNING_TASKS[3], status: 'pending' },
-        { ...INITIAL_PLANNING_TASKS[4], status: 'pending' },
       ]);
 
       stageTimer1 = setTimeout(() => {
@@ -209,17 +200,7 @@ export const App: React.FC = () => {
             ? { ...t, status: 'in_progress' }
             : t
         ));
-      }, 4500);
-
-      stageTimer2 = setTimeout(() => {
-        setTasks(prev => prev.map(t =>
-          t.id === 'journey_architect'
-            ? { ...t, status: 'completed' }
-            : t.id === 'trip_summary'
-            ? { ...t, status: 'in_progress' }
-            : t
-        ));
-      }, 8500);
+      }, 2200);
     }
 
     try {

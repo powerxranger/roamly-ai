@@ -27,6 +27,7 @@ def _prepare_graph_input(user_input: str, existing_state: dict | None) -> dict:
             "user_query": user_input,
             "destination": existing_state.get("destination", ""),
             "origin": existing_state.get("origin", ""),
+            "travel_dates": existing_state.get("travel_dates"),
             "flight_results": existing_state.get("flight_results", ""),
             "hotel_results": existing_state.get("hotel_results", ""),
             "weather_results": existing_state.get("weather_results", ""),
@@ -35,6 +36,10 @@ def _prepare_graph_input(user_input: str, existing_state: dict | None) -> dict:
             "hotel_model": existing_state.get("hotel_model"),
             "itinerary_model": existing_state.get("itinerary_model"),
             "weather_model": existing_state.get("weather_model"),
+            "trip_summary": existing_state.get("trip_summary", ""),
+            "estimated_budget": existing_state.get("estimated_budget", ""),
+            "recommendations": existing_state.get("recommendations", []),
+            "refinement_prompts": existing_state.get("refinement_prompts", []),
             "plan": existing_state.get("plan"),
             "followup_history": followup_history,
             "llm_calls": 0,
@@ -44,9 +49,10 @@ def _prepare_graph_input(user_input: str, existing_state: dict | None) -> dict:
     return initial_state(user_input)
 
 
-def _format_run_result(thread_id: str, result: dict) -> dict:
+def _format_run_result(thread_id: str, result: dict, run_llm_calls: int | None = None) -> dict:
     """Format the graph execution state into the API response dictionary."""
     final_answer = result["messages"][-1].content
+    calls = run_llm_calls if run_llm_calls is not None else result.get("llm_calls", 0)
 
     return {
         "thread_id": thread_id,
@@ -58,7 +64,7 @@ def _format_run_result(thread_id: str, result: dict) -> dict:
         "hotel_results": result.get("hotel_results", ""),
         "weather_results": result.get("weather_results", ""),
         "itinerary": result.get("itinerary", ""),
-        "llm_calls": result.get("llm_calls", 0),
+        "llm_calls": calls,
     }
 
 
@@ -78,12 +84,15 @@ async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> di
     graph = get_travel_graph()
 
     existing_state = None
+    initial_llm_calls = 0
     try:
         existing_snapshot = await graph.aget_state(config)
         if existing_snapshot and existing_snapshot.values and existing_snapshot.values.get("user_query"):
             existing_state = existing_snapshot.values
+            initial_llm_calls = existing_state.get("llm_calls", 0)
     except Exception:
         existing_state = None
+        initial_llm_calls = 0
 
     input_data = _prepare_graph_input(user_input, existing_state)
 
@@ -92,7 +101,8 @@ async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> di
         config=config,
     )
 
-    return _format_run_result(thread_id, result)
+    run_llm_calls = max(result.get("llm_calls", 0) - initial_llm_calls, 0)
+    return _format_run_result(thread_id, result, run_llm_calls=run_llm_calls)
 
 
 def run_travel_agent(user_input: str, thread_id: str | None = None) -> dict:

@@ -13,32 +13,37 @@ from src.utils.async_utils import bump_llm_calls
 async def flight_agent(state: TravelState):
     intent = state.get("intent") or {}
     existing_model = state.get("flight_model")
-    existing_flights = state.get("flight_results", "")
 
-    # Skip scouting if semantic supervisor determined flights are not needed
-    if existing_flights and not intent.get("needs_flights", True):
+    # Skip scouting if semantic supervisor determined transit is not needed
+    if not intent.get("needs_flights", True):
         return {}
 
     destination = state.get("destination") or state.get("user_query", "")
     origin = state.get("origin") or intent.get("origin") or ""
+    user_query = state.get("user_query", "")
+    transit_preferences = intent.get("refinement_summary") or user_query or "Balanced transit options"
 
     search_context = ""
-    try:
+    search_query = intent.get("flight_search_query")
+    if not search_query:
         if origin:
-            search_query = f"how to travel from {origin} to {destination} flights train road transit distance duration ticket price"
+            search_query = f"{origin} to {destination} transit options flights train road {transit_preferences}"
         else:
-            search_query = f"how to reach {destination} nearest airport flights train road transit distance duration"
+            search_query = f"{destination} transit options flights train road"
+
+    try:
         flight_search_results = await tavily_mcp_search(search_query)
         search_context = str(flight_search_results) if flight_search_results else ""
     except Exception as search_err:
         print(f"[FlightAgent] Live web search unavailable ({search_err}). Falling back to model transit intelligence...")
-        search_context = f"Direct and regional transit options connecting {origin or 'origin'} and {destination}."
+        search_context = f"Transit and local navigation options for {destination}."
 
     try:
         structured_llm = get_structured_llm(TransitInfo)
         prompt = FLIGHT_STRUCTURED_PROMPT.format(
             origin=origin or "Departure city",
             destination=destination,
+            transit_preferences=transit_preferences,
             flight_data=search_context,
         )
 
@@ -63,8 +68,8 @@ async def flight_agent(state: TravelState):
                 flight_info.airlines = []
                 flight_info.airports = []
 
-        # If primary mode is purely road or train and no flight duration is provided, ground transfers to airports do not apply
-        if flight_info.primary_mode in ("Road / Drive", "Road", "Train") and not flight_info.duration:
+        # If no flight duration or airports were generated, ground transfers to airports do not apply
+        if not flight_info.duration and not flight_info.departure_airport:
             flight_info.origin_to_airport_transit = None
             flight_info.airport_to_destination_transit = None
 

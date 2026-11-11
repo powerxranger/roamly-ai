@@ -37,6 +37,10 @@ class TravelIntent(BaseModel):
         default=None,
         description="Explicit duration in days if specified or implied by the user (e.g. 3 for 'weekend', 10 for '10 days'). None if unspecified by the user.",
     )
+    travel_dates: Optional[str] = Field(
+        default=None,
+        description="Explicit travel dates, timeline, month, or season if specified by the user (e.g. 'next weekend', 'Dec 20 to Dec 25', 'December', 'in summer'). None if unspecified.",
+    )
     needs_flights: bool = Field(
         default=False,
         description="True if flight scouting is needed.",
@@ -56,6 +60,14 @@ class TravelIntent(BaseModel):
     refinement_summary: str = Field(
         default="",
         description="Semantic description of requested adjustments.",
+    )
+    flight_search_query: Optional[str] = Field(
+        default=None,
+        description="Targeted 3 to 8 word search query for flights, trains, road routes, or local transit passes if needs_flights is true. None otherwise.",
+    )
+    hotel_search_query: Optional[str] = Field(
+        default=None,
+        description="Targeted 3 to 8 word search query for accommodations matching traveler budget and style if needs_hotels is true. None otherwise.",
     )
     guardrail_message: Optional[str] = Field(
         default=None,
@@ -146,8 +158,8 @@ class HotelOption(BaseModel):
     """Structured accommodation recommendation emitted by Hotel Agent."""
 
     name: str = Field(..., description="Hotel name")
-    tier: Literal["Luxury", "Boutique", "Value", "Smart Value", "General"] = Field(
-        default="General", description="Accommodation tier: 'Luxury', 'Boutique', or 'Value'"
+    tier: str = Field(
+        default="General", description="Accommodation tier: 'Luxury', 'Boutique', 'Value', or style"
     )
     price_range: Optional[str] = Field(default=None, description="Estimated nightly rate in local or requested currency, e.g. '$150/night' or '₹10,000/night'")
     location: Optional[str] = Field(default=None, description="Neighborhood or area")
@@ -159,15 +171,7 @@ class HotelOption(BaseModel):
     def coerce_tier(cls, v):
         if not v:
             return "General"
-        v_str = str(v).strip()
-        v_lower = v_str.lower()
-        if "smart" in v_lower or "value" in v_lower or "budget" in v_lower:
-            return "Value"
-        if "boutique" in v_lower:
-            return "Boutique"
-        if "luxury" in v_lower or "upscale" in v_lower:
-            return "Luxury"
-        return v_str if v_str in ("Luxury", "Boutique", "Value", "General") else "General"
+        return str(v).strip().title()
 
     @field_validator("amenities", mode="before")
     @classmethod
@@ -203,10 +207,17 @@ class ItineraryDayPlan(BaseModel):
 
 
 class ItineraryPlan(BaseModel):
-    """Wrapper for Itinerary Agent structured output."""
+    """Wrapper for Itinerary Agent structured output combining daily schedule and executive synthesis."""
 
     duration_days: Optional[int] = Field(default=None, description="Total days in the itinerary")
     duration_rationale: Optional[str] = Field(default=None, description="Reasoning for recommended trip duration")
+    trip_summary: Optional[str] = Field(default="", description="2 clear paragraphs covering transit, daily highlights, and key activities")
+    estimated_budget: Optional[str] = Field(default=None, description="Total estimated budget range per traveler in relevant currency")
+    recommendations: Optional[list[str]] = Field(default_factory=list, description="3 to 4 practical travel tips")
+    refinement_prompts: Optional[list[str]] = Field(
+        default_factory=list,
+        description="2 to 3 concise follow-up suggestions inviting the traveler to tailor duration, budget, pace, or day trips",
+    )
     days: Optional[list[ItineraryDayPlan]] = Field(default_factory=list, description="Ordered daily schedule")
 
     @field_validator("days", mode="before")
@@ -214,13 +225,19 @@ class ItineraryPlan(BaseModel):
     def coerce_days(cls, v):
         return [] if v is None else v
 
+    @field_validator("recommendations", "refinement_prompts", mode="before")
+    @classmethod
+    def coerce_plan_lists(cls, v):
+        return [] if v is None else v
+
 
 class WeatherPlan(BaseModel):
     """Structured climate and packing recommendations."""
 
-    current_conditions: Optional[str] = Field(default=None, description="Current meteorological conditions")
+    timeline: Optional[str] = Field(default=None, description="The travel timeline or season evaluated")
+    current_conditions: Optional[str] = Field(default=None, description="Current or timeline atmospheric conditions")
     temperature: Optional[str] = Field(default=None, description="Expected temperature range, e.g. '18°C - 24°C'")
-    forecast_summary: Optional[str] = Field(default=None, description="Weather forecast overview")
+    forecast_summary: Optional[str] = Field(default=None, description="Weather forecast overview for the trip timeline")
     packing_list: Optional[list[str]] = Field(default_factory=list, description="Recommended essentials to pack")
     source: Optional[str] = Field(default=None, description="Data source: 'openweather' or 'live_search'")
 

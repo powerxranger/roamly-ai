@@ -16,7 +16,7 @@ async def hotel_agent(state: TravelState):
     existing_hotels = state.get("hotel_results", "")
 
     # Skip scouting if semantic supervisor determined accommodations are not needed
-    if existing_hotels and not intent.get("needs_hotels", True):
+    if not intent.get("needs_hotels", True):
         return {}
 
     destination = state.get("destination") or state.get("user_query", "")
@@ -25,8 +25,11 @@ async def hotel_agent(state: TravelState):
     stay_preferences = refinement or user_query or "Balanced options across tiers"
 
     search_context = ""
+    search_query = intent.get("hotel_search_query")
+    if not search_query:
+        search_query = f"hotels accommodations in {destination} {stay_preferences} rates"
+
     try:
-        search_query = f"best hotels accommodations in {destination} top rated stays prices per night"
         hotel_search_results = await tavily_mcp_search(search_query)
         search_context = str(hotel_search_results) if hotel_search_results else ""
     except Exception as search_err:

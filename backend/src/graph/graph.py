@@ -4,7 +4,6 @@ from functools import lru_cache
 from langgraph.graph import END, START, StateGraph
 
 from src.agents.advisor_agent import advisor_agent
-from src.agents.final_agent import final_agent
 from src.agents.flight_agent import flight_agent
 from src.agents.guardrail_agent import guardrail_agent
 from src.agents.hotel_agent import hotel_agent
@@ -53,7 +52,6 @@ def build_graph() -> StateGraph:
     graph.add_node("hotel_agent", hotel_agent)
     graph.add_node("weather_agent", weather_agent)
     graph.add_node("itinerary_agent", itinerary_agent)
-    graph.add_node("final_agent", final_agent)
 
     # 2. START always activates the Lead Supervisor (Router Agent) first
     graph.add_edge(START, "router_agent")
@@ -83,9 +81,8 @@ def build_graph() -> StateGraph:
     graph.add_edge("hotel_agent", "itinerary_agent")
     graph.add_edge("weather_agent", "itinerary_agent")
 
-    # 7. Sequential executive synthesis
-    graph.add_edge("itinerary_agent", "final_agent")
-    graph.add_edge("final_agent", END)
+    # 7. Itinerary Agent completes directly to END
+    graph.add_edge("itinerary_agent", END)
 
     return graph
 

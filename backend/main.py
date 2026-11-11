@@ -138,12 +138,15 @@ async def travel_planner(request_data: TravelRequest):
         )
 
     except ValueError as e:
+        missing_keys = []
+        if not GEMINI_API_KEY and not GROQ_API_KEY:
+            missing_keys = ["GEMINI_API_KEY or GROQ_API_KEY"]
         return JSONResponse(
             status_code=428,
             content={
                 "success": False,
                 "error": str(e),
-                "missing": ["GROQ_API_KEY"],
+                "missing": missing_keys,
             }
         )
 

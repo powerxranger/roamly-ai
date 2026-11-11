@@ -10,20 +10,24 @@ from src.utils.async_utils import bump_llm_calls
 
 
 def _format_itinerary_summary(state: TravelState) -> str:
-    """Extract a concise summary of active days to ground local recommendations."""
+    """Extract a full summary of active days to ground local recommendations."""
     itinerary_model = state.get("itinerary_model")
     if itinerary_model and isinstance(itinerary_model, list):
         lines = []
-        for day in itinerary_model[:5]:
+        for day in itinerary_model:
             day_num = day.get("day_number", "")
             title = day.get("title", "")
             morning = day.get("morning", "")
-            lines.append(f"- Day {day_num} ({title}): Morning: {morning}")
+            afternoon = day.get("afternoon", "")
+            evening = day.get("evening", "")
+            details = [d for d in [morning, afternoon, evening] if d]
+            summary_part = f" - {', '.join(details)}" if details else ""
+            lines.append(f"- Day {day_num} ({title}){summary_part}")
         return "\n".join(lines)
 
     itinerary_text = state.get("itinerary", "")
-    if itinerary_text:
-        return itinerary_text[:600]
+    if itinerary_text and itinerary_text.strip():
+        return itinerary_text.strip()
 
     return "No established itinerary yet."
 
@@ -37,7 +41,7 @@ async def advisor_agent(state: TravelState) -> dict:
     # Targeted real-time web search for authentic local recommendations
     search_context = ""
     try:
-        search_query = f"{destination} {user_query} recommendations authentic top spots guide"
+        search_query = f"{destination} {user_query} recommendations authentic top spots"
         search_results = await tavily_mcp_search(search_query)
         search_context = str(search_results) if search_results else ""
     except Exception as search_err:
