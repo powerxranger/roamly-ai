@@ -7,7 +7,7 @@ from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import TransitInfo
-from src.utils.async_utils import bump_llm_calls, run_async, truncate
+from src.utils.async_utils import bump_llm_calls, run_async
 
 
 def flight_agent(state: TravelState):
@@ -29,7 +29,7 @@ def flight_agent(state: TravelState):
         else:
             search_query = f"how to reach {destination} nearest airport flights train bus road distance duration INR rupees"
         flight_search_results = run_async(tavily_mcp_search(search_query))
-        search_context = truncate(flight_search_results, 4000)
+        search_context = str(flight_search_results) if flight_search_results else ""
     except Exception as search_err:
         print(f"[FlightAgent] Live web search unavailable ({search_err}). Falling back to model transit intelligence...")
         search_context = f"Direct and regional transit options connecting {origin or 'origin'} and {destination}."

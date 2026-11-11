@@ -21,13 +21,3 @@ def bump_llm_calls(state: dict | None = None, count: int = 1) -> int:
     """Return the incremental LLM call count for the operator.add reducer."""
 
     return count
-
-
-def truncate(value: Any, limit: int = 5000) -> str:
-    """Stringify a tool payload and clip it only if it exceeds safety limit."""
-    if value is None:
-        return ""
-    text = str(value)
-    if limit and len(text) > limit:
-        return text[:limit]
-    return text

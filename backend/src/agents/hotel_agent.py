@@ -7,7 +7,7 @@ from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import HotelList, HotelOption
-from src.utils.async_utils import bump_llm_calls, run_async, truncate
+from src.utils.async_utils import bump_llm_calls, run_async
 
 
 def hotel_agent(state: TravelState):
@@ -25,7 +25,7 @@ def hotel_agent(state: TravelState):
     try:
         search_query = f"best hotels accommodations in {destination} luxury boutique rates INR rupees per night"
         hotel_search_results = run_async(tavily_mcp_search(search_query))
-        search_context = truncate(hotel_search_results, 4000)
+        search_context = str(hotel_search_results) if hotel_search_results else ""
     except Exception as search_err:
         print(f"[HotelAgent] Live web search unavailable ({search_err}). Falling back to model accommodation knowledge...")
         search_context = f"Top accommodations, luxury stays, and boutique hotels in {destination}."

@@ -7,7 +7,7 @@ from src.clients.llm import get_structured_llm
 from src.graph.state import TravelState
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import ItineraryDayPlan, ItineraryPlan
-from src.utils.async_utils import bump_llm_calls, run_async, truncate
+from src.utils.async_utils import bump_llm_calls, run_async
 
 
 def itinerary_agent(state: TravelState):
@@ -36,7 +36,7 @@ def itinerary_agent(state: TravelState):
         try:
             search_query = f"how many days to visit {destination} recommended itinerary duration travel guide"
             search_res = run_async(tavily_mcp_search(search_query))
-            duration_context = truncate(search_res, 4000)
+            duration_context = str(search_res) if search_res else ""
         except Exception:
             duration_context = ""
 

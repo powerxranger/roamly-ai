@@ -10,7 +10,7 @@ from src.graph.state import TravelState
 from src.mcp_servers.local import forecast_mcp_search, weather_mcp_search
 from src.mcp_servers.remote import tavily_mcp_search
 from src.models.travel_models import WeatherPlan
-from src.utils.async_utils import bump_llm_calls, run_async, truncate
+from src.utils.async_utils import bump_llm_calls, run_async
 
 
 def _parse_weather_data(raw: Any) -> dict:
@@ -104,7 +104,7 @@ def weather_agent(state: TravelState):
             structured_llm = get_structured_llm(WeatherPlan)
             prompt = WEATHER_STRUCTURED_PROMPT.format(
                 destination=city,
-                weather_data=truncate(weather_search_results, 3000),
+                weather_data=str(weather_search_results) if weather_search_results else "No weather data found.",
             )
 
             weather_plan = structured_llm.invoke([
