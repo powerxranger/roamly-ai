@@ -20,10 +20,13 @@ def hotel_agent(state: TravelState):
         return {}
 
     destination = state.get("destination") or state.get("user_query", "")
+    user_query = state.get("user_query", "")
+    refinement = intent.get("refinement_summary", "")
+    stay_preferences = refinement or user_query or "Balanced options across tiers"
 
     search_context = ""
     try:
-        search_query = f"best hotels accommodations in {destination} luxury boutique rates INR rupees per night"
+        search_query = f"best hotels accommodations in {destination} top rated stays prices per night"
         hotel_search_results = run_async(tavily_mcp_search(search_query))
         search_context = str(hotel_search_results) if hotel_search_results else ""
     except Exception as search_err:
@@ -34,11 +37,12 @@ def hotel_agent(state: TravelState):
         structured_llm = get_structured_llm(HotelList)
         prompt = HOTEL_STRUCTURED_PROMPT.format(
             destination=destination,
+            stay_preferences=stay_preferences,
             hotel_data=search_context,
         )
 
         result: HotelList = structured_llm.invoke([
-            SystemMessage(content="You are an expert travel assistant. Emit structured hotel options with all nightly rates quoted in Indian Rupees (₹ / INR)."),
+            SystemMessage(content="You are an expert travel assistant. Emit structured hotel options with nightly rates in the relevant local currency or traveler's stated currency."),
             HumanMessage(content=prompt),
         ])
 

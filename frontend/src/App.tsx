@@ -146,7 +146,7 @@ export const App: React.FC = () => {
     setTasks(INITIAL_PLANNING_TASKS);
   };
 
-  const handlePlanTrip = async (customQuery?: string) => {
+  const handlePlanTrip = async (customQuery?: string, isRetry: boolean = false) => {
     const textToSubmit = (customQuery || query).trim();
     if (!textToSubmit || isProcessing) return;
 
@@ -154,16 +154,18 @@ export const App: React.FC = () => {
     setIsProcessing(true);
     setQuery(''); // Clear input for next prompt
 
-    const isFollowUp = messages.length > 0;
+    // A follow-up requires an existing assistant plan/response and thread context
+    const isFollowUp = messages.some(m => m.role === 'assistant') && Boolean(threadId);
 
-    const newUserMessage: ChatMessage = {
-      id: `user_${Date.now()}`,
-      role: 'user',
-      content: textToSubmit,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, newUserMessage]);
+    if (!isRetry) {
+      const newUserMessage: ChatMessage = {
+        id: `user_${Date.now()}`,
+        role: 'user',
+        content: textToSubmit,
+        timestamp: new Date(),
+      };
+      setMessages(prev => [...prev, newUserMessage]);
+    }
 
     let stageTimer1: ReturnType<typeof setTimeout>;
     let stageTimer2: ReturnType<typeof setTimeout>;
@@ -448,7 +450,7 @@ export const App: React.FC = () => {
                       type="button"
                       onClick={() => {
                         const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
-                        if (lastUserMsg) handlePlanTrip(lastUserMsg.content);
+                        if (lastUserMsg) handlePlanTrip(lastUserMsg.content, true);
                       }}
                       className="mt-3 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-xs font-semibold text-rose-200 border border-rose-500/30 transition"
                     >

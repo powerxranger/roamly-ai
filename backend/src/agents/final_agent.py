@@ -27,7 +27,7 @@ def final_agent(state: TravelState):
         )
 
         synthesis: ExecutiveSynthesis = structured_llm.invoke([
-            SystemMessage(content="You are a helpful travel planner. Emit a clear trip summary and budget quoting all amounts in Indian Rupees (₹ / INR)."),
+            SystemMessage(content="You are a helpful travel planner. Emit a clear trip summary and budget quoting amounts in the relevant local or requested currency."),
             HumanMessage(content=prompt),
         ])
 

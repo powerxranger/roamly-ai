@@ -352,6 +352,7 @@ class TestPydanticArchitecture(unittest.TestCase):
 
         uncompiled = build_graph()
         self.assertIn("router_agent", uncompiled.nodes)
+        self.assertIn("guardrail_agent", uncompiled.nodes)
         self.assertIn("advisor_agent", uncompiled.nodes)
         self.assertIn("scout_fanout", uncompiled.nodes)
         self.assertIn("flight_agent", uncompiled.nodes)
@@ -362,6 +363,137 @@ class TestPydanticArchitecture(unittest.TestCase):
 
         compiled = get_travel_graph()
         self.assertIsNotNone(compiled)
+
+    def test_guardrail_out_of_scope_intent_and_routing(self):
+        """Verify out_of_scope queries short-circuit to guardrail_agent without planning fanout."""
+        from src.graph.graph import route_supervisor
+
+        data = {
+            "intent_type": "out_of_scope",
+            "destination": "",
+            "needs_flights": False,
+            "needs_hotels": False,
+            "needs_weather": False,
+            "needs_itinerary": False,
+            "guardrail_message": "Roamly specializes in travel planning.",
+        }
+        intent = TravelIntent(**data)
+        self.assertEqual(intent.intent_type, "out_of_scope")
+        self.assertFalse(intent.needs_flights)
+        self.assertFalse(intent.needs_itinerary)
+
+        state = {
+            "intent": intent.model_dump(),
+            "user_query": "Write a python script to invert a binary tree",
+        }
+        self.assertEqual(route_supervisor(state), "guardrail_agent")
+
+    def test_guardrail_clarification_needed_intent_and_routing(self):
+        """Verify vague travel queries without a destination route to guardrail_agent."""
+        from src.graph.graph import route_supervisor
+
+        data = {
+            "intent_type": "clarification_needed",
+            "destination": "",
+            "needs_flights": False,
+            "needs_hotels": False,
+            "needs_weather": False,
+            "needs_itinerary": False,
+            "refinement_summary": "User wants a weekend trip but did not specify destination",
+        }
+        intent = TravelIntent(**data)
+        self.assertEqual(intent.intent_type, "clarification_needed")
+
+        state = {
+            "intent": intent.model_dump(),
+            "user_query": "I want to go on a trip with my friends next weekend",
+        }
+        self.assertEqual(route_supervisor(state), "guardrail_agent")
+
+    def test_guardrail_agent_execution(self):
+        """Verify guardrail_agent returns conversational response without invoking LLM."""
+        from src.agents.guardrail_agent import guardrail_agent
+
+        state = {
+            "intent": {
+                "intent_type": "out_of_scope",
+                "guardrail_message": "Roamly is dedicated exclusively to travel planning.",
+            },
+            "user_query": "Can you do my calculus homework?",
+        }
+        result = guardrail_agent(state)
+        self.assertEqual(result["response_type"], "conversation")
+        self.assertIn("Roamly is dedicated exclusively", result["messages"][0].content)
+
+    def test_international_trip_plan_assembly(self):
+        """Verify that assemble_trip_plan cleanly handles international trips with non-INR currencies."""
+        flight_data = {
+            "origin": "London",
+            "destination": "Paris",
+            "route_type": "Short Regional Route",
+            "primary_mode": "Train",
+            "mode_recommendation": "Eurostar high-speed rail from St Pancras to Gare du Nord is faster and more convenient than flying.",
+            "duration": None,
+            "fare_range": None,
+            "airlines": [],
+            "airports": [],
+            "train_option": {
+                "mode": "Train",
+                "duration": "2h 16m",
+                "fare_range": "€78 - €140",
+                "operators": ["Eurostar"],
+                "terminals": ["London St Pancras", "Paris Gare du Nord"],
+                "details": "Direct high-speed rail under the English Channel.",
+            },
+            "road_option": None,
+            "season_tips": "Book Eurostar at least 4 weeks ahead for best fares.",
+            "summary": "Eurostar is the optimal direct transit between London and Paris.",
+        }
+        hotel_data = [
+            {
+                "name": "Hotel Monge",
+                "tier": "Boutique",
+                "price_range": "€220 - €310/night",
+                "location": "Latin Quarter, 5th Arrondissement",
+                "amenities": ["Spa", "Tea Salon", "Courtyard"],
+                "description": "Charming boutique hotel in the historic Latin Quarter.",
+            }
+        ]
+        itinerary_data = [
+            {
+                "day_number": 1,
+                "title": "Arrival and Latin Quarter Discovery",
+                "morning": "Eurostar arrival at Gare du Nord and check-in",
+                "afternoon": "Stroll Jardin des Plantes and Pantheon",
+                "evening": "Bistro dinner along Rue Mouffetard",
+                "highlights": ["Latin Quarter", "Jardin des Plantes"],
+            }
+        ]
+        weather_data = {
+            "current_conditions": "Partly cloudy",
+            "temperature": "16°C - 21°C",
+            "forecast_summary": "Mild spring weather with occasional light showers.",
+            "packing_list": ["Light trench coat", "Comfortable walking shoes", "Compact umbrella"],
+        }
+
+        plan_dict = assemble_trip_plan(
+            destination="Paris, France",
+            origin="London, UK",
+            overview_summary="High-speed rail journey from London to Paris.",
+            estimated_budget="€850 - €1,250",
+            recommendations=["Reserve Eurostar early", "Get Paris Museum Pass"],
+            flight_data=flight_data,
+            hotel_data=hotel_data,
+            itinerary_data=itinerary_data,
+            weather_data=weather_data,
+            duration_days=3,
+        )
+
+        self.assertEqual(plan_dict["destination_title"], "Paris, France")
+        self.assertEqual(plan_dict["estimated_budget"], "€850 - €1,250")
+        self.assertEqual(plan_dict["hotels"][0]["price_range"], "€220 - €310/night")
+        self.assertEqual(plan_dict["flights"]["train_option"]["fare_range"], "€78 - €140")
+        self.assertEqual(plan_dict["flights"]["primary_mode"], "Train")
 
 
 if __name__ == "__main__":

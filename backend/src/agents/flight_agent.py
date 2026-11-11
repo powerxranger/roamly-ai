@@ -25,9 +25,9 @@ def flight_agent(state: TravelState):
     search_context = ""
     try:
         if origin:
-            search_query = f"how to travel from {origin} to {destination} flights train road bus distance duration fare INR"
+            search_query = f"how to travel from {origin} to {destination} flights train road transit distance duration ticket price"
         else:
-            search_query = f"how to reach {destination} nearest airport flights train bus road distance duration INR rupees"
+            search_query = f"how to reach {destination} nearest airport flights train road transit distance duration"
         flight_search_results = run_async(tavily_mcp_search(search_query))
         search_context = str(flight_search_results) if flight_search_results else ""
     except Exception as search_err:
@@ -43,7 +43,7 @@ def flight_agent(state: TravelState):
         )
 
         flight_info: TransitInfo = structured_llm.invoke([
-            SystemMessage(content="You are an expert travel and transit analyst. Emit strictly structured transit data covering flights, trains, and road options with all fares quoted in Indian Rupees (₹ / INR)."),
+            SystemMessage(content="You are an expert travel and transit analyst. Emit strictly structured transit data covering flights, trains, and road options with realistic fares in the relevant local currency."),
             HumanMessage(content=prompt),
         ])
         if origin and not flight_info.origin:

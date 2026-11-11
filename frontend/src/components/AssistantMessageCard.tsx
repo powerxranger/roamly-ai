@@ -49,7 +49,9 @@ export const AssistantMessageCard: React.FC<AssistantMessageCardProps> = ({
             <GitFork className="h-3 w-3 text-indigo-400" />
             <span>
               {data.response_type === 'conversation'
-                ? 'Fast Advisor (1-Hop)'
+                ? data.llm_calls <= 1
+                  ? 'Guardrail Filter (Direct)'
+                  : 'Fast Advisor (1-Hop)'
                 : `${data.llm_calls} nodes executed`}
             </span>
           </button>

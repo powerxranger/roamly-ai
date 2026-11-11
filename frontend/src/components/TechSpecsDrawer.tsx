@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Cpu, GitFork, Server, Zap, CheckCircle2, Copy, Check, ExternalLink } from 'lucide-react';
+import { X, Cpu, GitFork, Server, Zap, CheckCircle2, Copy, Check, ExternalLink, ShieldAlert } from 'lucide-react';
 
 interface TechSpecsDrawerProps {
   isOpen: boolean;
@@ -111,6 +111,15 @@ export const TechSpecsDrawer: React.FC<TechSpecsDrawerProps> = ({
               </div>
               <div className="pl-5 text-[11px] text-slate-400 font-sans">
                 Evaluates user intent & trip state into Pydantic <code className="text-blue-300 font-mono">TravelIntent</code> and dynamically selects the execution path.
+              </div>
+
+              {/* Path 0: Guardrail Filter */}
+              <div className="flex items-center gap-2 text-rose-400 font-semibold pt-1">
+                <ShieldAlert className="h-3.5 w-3.5" />
+                <span>Path 0: Guardrail (guardrail_agent ➔ END)</span>
+              </div>
+              <div className="pl-5 text-[11px] text-slate-400 font-sans">
+                Short-circuits off-topic queries, code requests, and vague prompts without triggering research scouts or wasting quota.
               </div>
 
               {/* Path 3: Fast Advisor */}

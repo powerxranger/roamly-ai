@@ -15,13 +15,15 @@ class TravelIntent(BaseModel):
         "update_accommodations",
         "update_transit",
         "general_question",
+        "out_of_scope",
+        "clarification_needed",
     ] = Field(
-        ...,
+        default="initial_planning",
         description="Categorization of user request.",
     )
-    destination: str = Field(
-        ...,
-        description="The primary target destination (e.g. 'Tokyo & Kyoto, Japan', 'Bangalore').",
+    destination: Optional[str] = Field(
+        default="",
+        description="The primary target destination (e.g. 'Tokyo & Kyoto, Japan', 'Bangalore'). Leave empty if out of scope or unspecified.",
     )
     origin: Optional[str] = Field(
         default=None,
@@ -55,6 +57,15 @@ class TravelIntent(BaseModel):
         default="",
         description="Semantic description of requested adjustments.",
     )
+    guardrail_message: Optional[str] = Field(
+        default=None,
+        description="Direct boundary response or clarifying travel guidance when intent is out_of_scope or clarification_needed.",
+    )
+
+    @field_validator("destination", mode="before")
+    @classmethod
+    def coerce_destination(cls, v):
+        return "" if v is None else str(v).strip()
 
 
 class TransitOption(BaseModel):
@@ -62,9 +73,9 @@ class TransitOption(BaseModel):
 
     mode: str = Field(..., description="Transport mode: e.g. 'Train', 'Road / Drive', 'Flight', 'Bus'")
     duration: Optional[str] = Field(default=None, description="Travel duration, e.g. '3h 45m'")
-    fare_range: Optional[str] = Field(default=None, description="Estimated fare in INR, e.g. '₹900 - ₹1,800'")
-    operators: Optional[list[str]] = Field(default_factory=list, description="Key train names, bus operators, or highway names (e.g. ['Vande Bharat Express', 'Shatabdi'])")
-    terminals: Optional[list[str]] = Field(default_factory=list, description="Departure and arrival stations or hubs (e.g. ['New Delhi (NDLS)', 'Jaipur (JP)'])")
+    fare_range: Optional[str] = Field(default=None, description="Estimated fare in local or requested currency, e.g. '$35 - $60' or '₹900 - ₹1,800'")
+    operators: Optional[list[str]] = Field(default_factory=list, description="Key train names, bus operators, or highway names (e.g. ['Eurostar', 'Shinkansen', 'Vande Bharat Express', 'Amtrak'])")
+    terminals: Optional[list[str]] = Field(default_factory=list, description="Departure and arrival stations or hubs (e.g. ['Paris Gare du Nord', 'London St Pancras'] or ['New Delhi (NDLS)', 'Jaipur (JP)'])")
     details: Optional[str] = Field(default=None, description="Practical travel guidance, distance, or route tips")
 
     @field_validator("operators", "terminals", mode="before")
@@ -92,27 +103,27 @@ class TransitInfo(BaseModel):
     )
     departure_airport: Optional[str] = Field(
         default=None,
-        description="Serving commercial departure airport (e.g. 'Indira Gandhi International (DEL)' or nearest airport if origin has no commercial airport, like 'Dehradun Jolly Grant Airport (DED)')",
+        description="Serving commercial departure airport (e.g. 'JFK', 'LHR', 'DEL', or nearest regional airport if origin has no commercial airport)",
     )
     arrival_airport: Optional[str] = Field(
         default=None,
-        description="Serving commercial arrival airport (e.g. 'Kempegowda International (BLR)' or nearest airport if destination has no commercial airport, like 'Hubli Airport (HBX)')",
+        description="Serving commercial arrival airport (e.g. 'HND', 'CDG', 'BLR', or nearest regional airport if destination has no commercial airport)",
     )
     origin_to_airport_transit: Optional[str] = Field(
         default=None,
-        description="Ground transit from origin city to departure airport if origin city has no airport (e.g. 'Cab or bus from Rishikesh to Dehradun Airport (~35 km, 45-60 mins)')",
+        description="Ground transit from origin city to departure airport if origin city has no airport (e.g. 'Cab or shuttle to nearest regional airport (~35 km, 45 mins)')",
     )
     airport_to_destination_transit: Optional[str] = Field(
         default=None,
-        description="Ground transit from arrival airport to destination city if destination city has no airport (e.g. 'Cab or train from Hubli/Jindal Airport to Hampi (~40-140 km, 1-3 hrs)')",
+        description="Ground transit from arrival airport to destination city if destination city has no airport (e.g. 'Cab or train from arrival airport to destination (~50 km, 1 hour)')",
     )
     duration: Optional[str] = Field(default=None, description="Typical flight duration, e.g. '2h 45m direct', or null if flying is not recommended")
-    fare_range: Optional[str] = Field(default=None, description="Estimated airfare range in INR, e.g. '₹7,000 - ₹14,000'")
+    fare_range: Optional[str] = Field(default=None, description="Estimated airfare range in local or requested currency, e.g. '$450 - $700' or '₹12,000 - ₹18,000'")
     airlines: Optional[list[str]] = Field(default_factory=list, description="Top airlines operating route, or empty list if flying is not viable")
     airports: Optional[list[str]] = Field(default_factory=list, description="Primary airport codes/names, or empty list if not applicable")
     train_option: Optional[TransitOption] = Field(
         default=None,
-        description="Train / Rail alternative if viable (duration, train names like Vande Bharat/Rajdhani, fare, stations)",
+        description="Train / Rail alternative if viable (duration, train names, fare, stations)",
     )
     road_option: Optional[TransitOption] = Field(
         default=None,
@@ -138,7 +149,7 @@ class HotelOption(BaseModel):
     tier: Literal["Luxury", "Boutique", "Value", "Smart Value", "General"] = Field(
         default="General", description="Accommodation tier: 'Luxury', 'Boutique', or 'Value'"
     )
-    price_range: Optional[str] = Field(default=None, description="Estimated nightly rate in INR, e.g. '₹12,000/night'")
+    price_range: Optional[str] = Field(default=None, description="Estimated nightly rate in local or requested currency, e.g. '$150/night' or '₹10,000/night'")
     location: Optional[str] = Field(default=None, description="Neighborhood or area")
     amenities: Optional[list[str]] = Field(default_factory=list, description="Key amenities")
     description: str = Field(default="", description="Hotel summary")

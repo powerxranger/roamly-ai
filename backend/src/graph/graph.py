@@ -6,6 +6,7 @@ from langgraph.graph import END, START, StateGraph
 from src.agents.advisor_agent import advisor_agent
 from src.agents.final_agent import final_agent
 from src.agents.flight_agent import flight_agent
+from src.agents.guardrail_agent import guardrail_agent
 from src.agents.hotel_agent import hotel_agent
 from src.agents.itinerary_agent import itinerary_agent
 from src.agents.router_agent import router_agent
@@ -22,11 +23,15 @@ def scout_fanout(state: TravelState) -> dict:
 def route_supervisor(state: TravelState) -> str:
     """Determine dynamic execution path based on classified travel intent.
 
-    Path 1 & 2 (Plan creation or modification): Routes to scout fan-out.
-    Path 3 (Local Q&A, recommendations, food, advice): Fast-paths to advisor agent.
+    Path 1 (Out-of-Scope / Guardrail): Short-circuits directly to guardrail agent.
+    Path 2 (Local Q&A, recommendations, food, advice): Fast-paths to advisor agent.
+    Path 3 (Plan creation or surgical modification): Routes to scout fan-out.
     """
     intent = state.get("intent") or {}
     intent_type = intent.get("intent_type", "initial_planning")
+
+    if intent_type in ("out_of_scope", "clarification_needed"):
+        return "guardrail_agent"
 
     if intent_type == "general_question":
         return "advisor_agent"
@@ -41,6 +46,7 @@ def build_graph() -> StateGraph:
 
     # 1. Register all nodes
     graph.add_node("router_agent", router_agent)
+    graph.add_node("guardrail_agent", guardrail_agent)
     graph.add_node("advisor_agent", advisor_agent)
     graph.add_node("scout_fanout", scout_fanout)
     graph.add_node("flight_agent", flight_agent)
@@ -52,20 +58,22 @@ def build_graph() -> StateGraph:
     # 2. START always activates the Lead Supervisor (Router Agent) first
     graph.add_edge(START, "router_agent")
 
-    # 3. Dynamic Conditional Routing: Fast advisor vs Planning pipeline
+    # 3. Dynamic Conditional Routing: Guardrail vs Advisor vs Planning Pipeline
     graph.add_conditional_edges(
         "router_agent",
         route_supervisor,
         {
+            "guardrail_agent": "guardrail_agent",
             "advisor_agent": "advisor_agent",
             "scout_fanout": "scout_fanout",
         },
     )
 
-    # 4. Path 3: Advisor completes directly to END (fast 1-hop path)
+    # 4. Guardrail & Advisor complete directly to END (fast short-circuit paths)
+    graph.add_edge("guardrail_agent", END)
     graph.add_edge("advisor_agent", END)
 
-    # 5. Path 1 & 2: Parallel research fan-out from scout_fanout
+    # 5. Planning Research: Parallel research fan-out from scout_fanout
     graph.add_edge("scout_fanout", "flight_agent")
     graph.add_edge("scout_fanout", "hotel_agent")
     graph.add_edge("scout_fanout", "weather_agent")
