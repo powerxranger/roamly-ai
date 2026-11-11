@@ -300,6 +300,69 @@ class TestPydanticArchitecture(unittest.TestCase):
         self.assertEqual(info.airports, [])
         self.assertEqual(info.train_option.operators, [])
 
+    def test_travel_intent_general_question(self):
+        """Verify that follow-up questions (e.g. food, spots, tips) produce valid general_question intent with needs_itinerary=False."""
+        data = {
+            "intent_type": "general_question",
+            "destination": "Mumbai",
+            "needs_flights": False,
+            "needs_hotels": False,
+            "needs_weather": False,
+            "needs_itinerary": False,
+            "refinement_summary": "Looking for the best Vadapav spots in Mumbai",
+        }
+        intent = TravelIntent(**data)
+        self.assertEqual(intent.intent_type, "general_question")
+        self.assertEqual(intent.destination, "Mumbai")
+        self.assertFalse(intent.needs_itinerary)
+        self.assertFalse(intent.needs_flights)
+        self.assertFalse(intent.needs_hotels)
+
+    def test_dynamic_supervisor_routing_logic(self):
+        """Verify that route_supervisor dynamically selects execution paths based on classified intent."""
+        from src.graph.graph import route_supervisor
+
+        # Path 3: Q&A / recommendations -> fast advisor agent
+        qa_state = {
+            "intent": {"intent_type": "general_question"},
+            "destination": "Mumbai",
+            "user_query": "What are the best Vadapav places?",
+        }
+        self.assertEqual(route_supervisor(qa_state), "advisor_agent")
+
+        # Path 1: Initial trip planning -> scout fan-out
+        initial_state = {
+            "intent": {"intent_type": "initial_planning"},
+            "destination": "Tokyo",
+            "user_query": "Plan a 7-day trip to Tokyo",
+        }
+        self.assertEqual(route_supervisor(initial_state), "scout_fanout")
+
+        # Path 2: Itinerary modification -> scout fan-out (surgical delta execution)
+        modify_state = {
+            "intent": {"intent_type": "refine_itinerary"},
+            "destination": "Mumbai",
+            "user_query": "Add a day trip to Alibaug on Day 3",
+        }
+        self.assertEqual(route_supervisor(modify_state), "scout_fanout")
+
+    def test_graph_structure_and_compilation(self):
+        """Verify that the StateGraph compiles cleanly with dynamic conditional routing and checkpointer."""
+        from src.graph.graph import build_graph, get_travel_graph
+
+        uncompiled = build_graph()
+        self.assertIn("router_agent", uncompiled.nodes)
+        self.assertIn("advisor_agent", uncompiled.nodes)
+        self.assertIn("scout_fanout", uncompiled.nodes)
+        self.assertIn("flight_agent", uncompiled.nodes)
+        self.assertIn("hotel_agent", uncompiled.nodes)
+        self.assertIn("weather_agent", uncompiled.nodes)
+        self.assertIn("itinerary_agent", uncompiled.nodes)
+        self.assertIn("final_agent", uncompiled.nodes)
+
+        compiled = get_travel_graph()
+        self.assertIsNotNone(compiled)
+
 
 if __name__ == "__main__":
     unittest.main()

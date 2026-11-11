@@ -68,6 +68,7 @@ export interface TravelPlanPayload {
 export interface TravelSuccessResponse {
   success: true;
   thread_id: string;
+  response_type?: 'plan' | 'conversation';
   answer: string;
   plan?: TravelPlanPayload;
   destination?: string;

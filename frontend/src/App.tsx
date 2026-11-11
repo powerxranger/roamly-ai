@@ -60,6 +60,33 @@ const INITIAL_PLANNING_TASKS: PlannerTask[] = [
   },
 ];
 
+const FOLLOWUP_PLANNING_TASKS: PlannerTask[] = [
+  {
+    id: 'supervisor_router',
+    label: 'Supervisor Router',
+    sublabel: 'Analyzing intent and selecting execution path',
+    icon: 'synthesis',
+    status: 'in_progress',
+    technicalRole: 'LangGraph Conditional Router',
+  },
+  {
+    id: 'specialist_scout',
+    label: 'Advisor & Specialist',
+    sublabel: 'Searching live recommendations and active itinerary context',
+    icon: 'itinerary',
+    status: 'pending',
+    technicalRole: 'Context-Grounded Advisor',
+  },
+  {
+    id: 'synthesis_response',
+    label: 'Tailored Response',
+    sublabel: 'Formulating focused travel recommendations',
+    icon: 'weather',
+    status: 'pending',
+    technicalRole: 'State Reducer & Advisor',
+  },
+];
+
 export const App: React.FC = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [query, setQuery] = useState('');
@@ -138,55 +165,60 @@ export const App: React.FC = () => {
 
     setMessages(prev => [...prev, newUserMessage]);
 
-    // Phase 1: Parallel scout tasks are activated concurrently
-    setTasks([
-      {
-        ...INITIAL_PLANNING_TASKS[0],
-        status: 'in_progress',
-        sublabel: isFollowUp ? 'Evaluating flight adjustments...' : INITIAL_PLANNING_TASKS[0].sublabel
-      },
-      {
-        ...INITIAL_PLANNING_TASKS[1],
-        status: 'in_progress',
-        sublabel: isFollowUp ? 'Checking accommodations alignment...' : INITIAL_PLANNING_TASKS[1].sublabel
-      },
-      {
-        ...INITIAL_PLANNING_TASKS[2],
-        status: 'in_progress',
-        sublabel: isFollowUp ? 'Verifying regional climate...' : INITIAL_PLANNING_TASKS[2].sublabel
-      },
-      { ...INITIAL_PLANNING_TASKS[3], status: 'pending' },
-      { ...INITIAL_PLANNING_TASKS[4], status: 'pending' },
-    ]);
+    let stageTimer1: ReturnType<typeof setTimeout>;
+    let stageTimer2: ReturnType<typeof setTimeout>;
 
-    // Timed realistic visual transitions reflecting the LangGraph fan-out / barrier fan-in
-    const stageTimer1 = setTimeout(() => {
-      setTasks(prev => prev.map(t =>
-        ['flight_scout', 'stays_curator', 'climate_intel'].includes(t.id)
-          ? { ...t, status: 'completed' }
-          : t.id === 'journey_architect'
-          ? {
-              ...t,
-              status: 'in_progress',
-              sublabel: isFollowUp ? 'Updating day schedule with adjustments...' : t.sublabel
-            }
-          : t
-      ));
-    }, 4500);
+    if (isFollowUp) {
+      setTasks(FOLLOWUP_PLANNING_TASKS);
+      stageTimer1 = setTimeout(() => {
+        setTasks(prev => prev.map(t =>
+          t.id === 'supervisor_router'
+            ? { ...t, status: 'completed' }
+            : t.id === 'specialist_scout'
+            ? { ...t, status: 'in_progress' }
+            : t
+        ));
+      }, 1000);
 
-    const stageTimer2 = setTimeout(() => {
-      setTasks(prev => prev.map(t =>
-        t.id === 'journey_architect'
-          ? { ...t, status: 'completed' }
-          : t.id === 'trip_summary'
-          ? {
-              ...t,
-              status: 'in_progress',
-              sublabel: isFollowUp ? 'Finalizing updated travel plan...' : t.sublabel
-            }
-          : t
-      ));
-    }, 8500);
+      stageTimer2 = setTimeout(() => {
+        setTasks(prev => prev.map(t =>
+          ['supervisor_router', 'specialist_scout'].includes(t.id)
+            ? { ...t, status: 'completed' }
+            : t.id === 'synthesis_response'
+            ? { ...t, status: 'in_progress' }
+            : t
+        ));
+      }, 2400);
+    } else {
+      // Phase 1: Parallel scout tasks are activated concurrently
+      setTasks([
+        { ...INITIAL_PLANNING_TASKS[0], status: 'in_progress' },
+        { ...INITIAL_PLANNING_TASKS[1], status: 'in_progress' },
+        { ...INITIAL_PLANNING_TASKS[2], status: 'in_progress' },
+        { ...INITIAL_PLANNING_TASKS[3], status: 'pending' },
+        { ...INITIAL_PLANNING_TASKS[4], status: 'pending' },
+      ]);
+
+      stageTimer1 = setTimeout(() => {
+        setTasks(prev => prev.map(t =>
+          ['flight_scout', 'stays_curator', 'climate_intel'].includes(t.id)
+            ? { ...t, status: 'completed' }
+            : t.id === 'journey_architect'
+            ? { ...t, status: 'in_progress' }
+            : t
+        ));
+      }, 4500);
+
+      stageTimer2 = setTimeout(() => {
+        setTasks(prev => prev.map(t =>
+          t.id === 'journey_architect'
+            ? { ...t, status: 'completed' }
+            : t.id === 'trip_summary'
+            ? { ...t, status: 'in_progress' }
+            : t
+        ));
+      }, 8500);
+    }
 
     try {
       const response = await planTravel({

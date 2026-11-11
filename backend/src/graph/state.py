@@ -25,6 +25,7 @@ class TravelState(TypedDict, total=False):
     weather_model: Optional[dict[str, Any]]
     plan: Optional[dict[str, Any]]
     followup_history: list[str]
+    response_type: Optional[str]
 
 
 def initial_state(user_query: str) -> TravelState:
@@ -46,4 +47,5 @@ def initial_state(user_query: str) -> TravelState:
         "weather_model": None,
         "plan": None,
         "followup_history": [],
+        "response_type": "plan",
     }

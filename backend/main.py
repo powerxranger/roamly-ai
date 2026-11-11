@@ -129,6 +129,7 @@ async def travel_planner(request_data: TravelRequest):
             content={
                 "success": True,
                 "thread_id": result["thread_id"],
+                "response_type": result.get("response_type", "plan"),
                 "answer": result["answer"],
                 "plan": result.get("plan"),
                 "destination": result.get("destination", ""),

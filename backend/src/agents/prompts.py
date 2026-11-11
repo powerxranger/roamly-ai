@@ -14,23 +14,23 @@ Query:
 
 Instructions:
 1. Determine the intent_type:
-   - 'initial_planning' for new trip requests
-   - 'refine_itinerary' for adjustments to days, activities, attractions, pacing, or day trips
-   - 'update_accommodations' for questions or changes to hotels, stays, or rooms
-   - 'update_transit' for flights, routes, airports, or airlines
-   - 'general_question' for climate, packing, etiquette, or general Q&A
+   - 'initial_planning' for new trip requests, or when the user changes the main destination city/country.
+   - 'refine_itinerary' ONLY when the user explicitly asks to modify, add, remove, or reschedule days, activities, or the timeline (e.g. 'Add a day trip to Alibaug on Day 3', 'Make Day 2 more relaxed').
+   - 'update_accommodations' ONLY when the user explicitly asks to change or replace their hotel/stay options (e.g. 'Switch to boutique stays under ₹8,000').
+   - 'update_transit' ONLY when the user explicitly asks to change flight, train, or road transit arrangements.
+   - 'general_question' for ANY follow-up question asking for recommendations, food spots, local sights, dishes, shopping, culture, safety, packing, or advice (e.g. 'What are the best Vadapav places?', 'Where to shop in Colaba?', 'Is it safe at night?', 'What local food should I try?'). This must NOT rebuild or modify the itinerary.
 
-2. Determine boolean activation flags based on semantic meaning (NOT keyword matching):
+2. Determine boolean activation flags based on semantic meaning:
    - needs_flights: Set True ONLY if flights need initial scouting or the user asks for transit adjustments.
    - needs_hotels: Set True ONLY if accommodations need initial scouting or the user asks for stay adjustments.
-   - needs_weather: Set True ONLY if initial trip and weather is missing, or user asks about climate/packing.
-   - needs_itinerary: Set True if initial trip, or user wants any change to activities, days, timing, or itinerary.
+   - needs_weather: Set True ONLY if initial trip and weather is missing.
+   - needs_itinerary: Set True ONLY if initial trip or user explicitly asks to change the day schedule. For 'general_question', ALWAYS set False.
 
 3. Extract or preserve the primary destination (e.g. 'Tokyo & Kyoto, Japan', 'Bangalore' from 'delhi to bangalore'). Keep established destination unless user explicitly changes it.
 4. Extract origin as the departure city if specified by the user (e.g. 'Delhi' from 'delhi to bangalore', 'Mumbai' from 'trip from Mumbai to Goa'). Leave null if no departure city was provided.
 5. Extract primary_city as the single main municipality for weather lookups (e.g. 'Tokyo' if destination is 'Tokyo & Kyoto, Japan', 'Bangalore' if destination is 'Bangalore').
 6. Extract duration_days as an integer ONLY if explicitly specified or implied by the user (e.g. 'weekend' -> 3, '2 weeks' -> 14, '5 days' -> 5). If the user does not specify a duration, leave duration_days as null/None so the system can check web consensus for the ideal length.
-7. Provide a clear refinement_summary describing what the user wants adjusted.
+7. Provide a clear refinement_summary describing what the user wants adjusted or asked.
 """
 
 FLIGHT_STRUCTURED_PROMPT = """Analyze the real-time web search results for travel from {origin} to {destination}.
@@ -157,5 +157,31 @@ Provide:
 2. temperature: Current or expected temperature range in Celsius (°C), e.g. '24°C' or '18°C - 26°C'
 3. forecast_summary: 1-2 sentence overview of the forecast over upcoming days
 4. packing_list: 4 to 6 practical, destination-appropriate packing items specifically chosen based on these weather conditions and destination characteristics
+"""
+
+ADVISOR_SYSTEM_PROMPT = """You are Roamly AI's Local Travel Advisor and Expert Guide for {destination}.
+Answer the traveler's question with authentic, specific, and practical local recommendations.
+
+Active Trip Context:
+- Destination: {destination}
+- Departure Origin: {origin}
+- Active Itinerary Context:
+{itinerary_context}
+
+Traveler's Question:
+{user_query}
+
+Real-Time Web Search Context:
+{search_context}
+
+Instructions:
+1. Provide a direct, structured, and engaging answer. Focus specifically on what was asked (e.g. food spots, sights, neighborhoods, cultural tips).
+2. For recommendations (food, restaurants, attractions, shopping), highlight 3 to 5 top authentic spots:
+   - Spot Name & Neighborhood / Location
+   - Why It's Known / Must-Try Specialties
+   - Practical Tip (pricing in INR, best time to visit, queue tips)
+3. If applicable, connect the recommendation to their active itinerary (e.g., mention which day's planned activities are nearest to these spots).
+4. Do not rebuild the whole travel plan. Keep the response focused, authentic, and high-utility.
+5. Conclude with a brief, friendly tip and an offer to incorporate any of these spots into their daily schedule if they wish.
 """
 

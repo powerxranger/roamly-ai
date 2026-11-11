@@ -48,6 +48,7 @@ async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> di
             "messages": [HumanMessage(content=user_input)],
             "user_query": user_input,
             "destination": existing_state.get("destination", ""),
+            "origin": existing_state.get("origin", ""),
             "flight_results": existing_state.get("flight_results", ""),
             "hotel_results": existing_state.get("hotel_results", ""),
             "weather_results": existing_state.get("weather_results", ""),
@@ -59,6 +60,7 @@ async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> di
             "plan": existing_state.get("plan"),
             "followup_history": followup_history,
             "llm_calls": 0,
+            "response_type": "plan",
         }
     else:
         # Initial travel request
@@ -73,6 +75,7 @@ async def arun_travel_agent(user_input: str, thread_id: str | None = None) -> di
 
     return {
         "thread_id": thread_id,
+        "response_type": result.get("response_type", "plan"),
         "answer": final_answer,
         "plan": result.get("plan"),
         "destination": result.get("destination", ""),
@@ -116,6 +119,7 @@ def run_travel_agent(user_input: str, thread_id: str | None = None) -> dict:
             "messages": [HumanMessage(content=user_input)],
             "user_query": user_input,
             "destination": existing_state.get("destination", ""),
+            "origin": existing_state.get("origin", ""),
             "flight_results": existing_state.get("flight_results", ""),
             "hotel_results": existing_state.get("hotel_results", ""),
             "weather_results": existing_state.get("weather_results", ""),
@@ -127,6 +131,7 @@ def run_travel_agent(user_input: str, thread_id: str | None = None) -> dict:
             "plan": existing_state.get("plan"),
             "followup_history": followup_history,
             "llm_calls": 0,
+            "response_type": "plan",
         }
     else:
         # Initial travel request
@@ -141,6 +146,7 @@ def run_travel_agent(user_input: str, thread_id: str | None = None) -> dict:
 
     return {
         "thread_id": thread_id,
+        "response_type": result.get("response_type", "plan"),
         "answer": final_answer,
         "plan": result.get("plan"),
         "destination": result.get("destination", ""),

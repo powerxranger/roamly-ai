@@ -47,20 +47,24 @@ export const AssistantMessageCard: React.FC<AssistantMessageCardProps> = ({
             title="Inspect Execution DAG and System Specs"
           >
             <GitFork className="h-3 w-3 text-indigo-400" />
-            <span>{data.llm_calls} nodes executed</span>
+            <span>
+              {data.response_type === 'conversation'
+                ? 'Fast Advisor (1-Hop)'
+                : `${data.llm_calls} nodes executed`}
+            </span>
           </button>
         )}
       </div>
 
-      {/* Structured Results or Markdown Response */}
-      {data ? (
+      {/* Structured Results or Conversational Markdown Response */}
+      {data && data.response_type !== 'conversation' && data.plan ? (
         <ResultsViewer
           data={data}
           query={query}
           baseQuery={baseQuery}
         />
       ) : (
-        <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 shadow-2xl">
+        <div className="rounded-3xl bg-slate-900/90 border border-slate-800 p-6 sm:p-7 shadow-2xl">
           <MarkdownRenderer content={content} />
         </div>
       )}
